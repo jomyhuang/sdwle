@@ -1,0 +1,67 @@
+{"id":"GVG_040",
+"name":"Siltfin Spiritwalker",
+"type":"Minion",
+"rarity":"Epic",
+"cost":4,
+"attack":2,
+"health":5,
+"text":"Whenever another friendly Murloc dies, draw a card. <b>Overload</b>: (1)",
+"flavor":"The elements respond to anyone who calls them for a worthy cause, even if you call them by yelling, \"MRGHRGLGLGL!\"",
+"artist":"Clint Langley",
+"collectible":true,
+"race":"Murloc",
+"playerClass":"Shaman"}
+
+  {
+    "attack": 2,
+    "overload": 1,
+    "name": "Siltfin Spiritwalker",
+    "impl": {
+      "effects": [
+        {
+          "tags": [
+            {
+              "selector": {
+                "players": "friendly",
+                "name": "player"
+              },
+              "actions": [
+                {
+                  "name": "draw",
+                  "amount": 1
+                }
+              ]
+            }
+          ],
+          "event": {
+            "condition": {
+              "name": "is_type",
+              "include_self": false,
+              "minion_type": "Murloc"
+            },
+            "event_name": "minion_died",
+            "player": "friendly"
+          }
+        }
+      ]
+    },
+    "rarity": "Epic",
+    "minion_type": "Murloc",
+    "character_class": "Shaman",
+    "health": 5,
+    "type": "minion",
+    "mana": 4,
+    "collectible": true
+  },
+
+
+class SiltfinSpiritwalker(MinionCard):
+    def __init__(self):
+        super().__init__("Siltfin Spiritwalker", 4, CHARACTER_CLASS.SHAMAN, CARD_RARITY.EPIC,
+                         minion_type=MINION_TYPE.MURLOC, overload=1)
+
+    def create_minion(self, player):
+        return Minion(2, 5, effects=[Effect(MinionDied(IsType(MINION_TYPE.MURLOC)),
+                                            ActionTag(Draw(), PlayerSelector()))])
+
+
