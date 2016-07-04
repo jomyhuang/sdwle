@@ -1,3 +1,11 @@
+SEER DIMESION WAR logic engine (SDWLE)
+============
+
+SDW card game is no.1 TCG card game for Kids from Beetle
+study and first python3 project
+enhanced from Hearthbreaker project 
+
+
 Hearthbreaker
 =============
 A Hearthstone Simulator
