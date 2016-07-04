@@ -269,9 +269,8 @@ class MinionCard(Card, metaclass=abc.ABCMeta):
         if minion.card.is_facedown():
             if self._placeholder:
                 m = self._placeholder
-                #minion.index = self._placeholder.index
-                m.replace(minion)
                 self.facedown = False
+                m.replace(minion)
                 #raise GameException('face up')
             else:
                 raise GameException('card use no place holder')

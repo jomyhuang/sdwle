@@ -1010,7 +1010,9 @@ class Minion(Character):
         self.deathrattle = []
 
     def can_attack(self):
-        return (self.charge() or not self.exhausted) and super().can_attack()
+        #SDW rule
+        # return (self.charge() or not self.exhausted) and super().can_attack()
+        return (self.card.facedown or self.charge() or not self.exhausted) and super().can_attack()
 
     def can_be_attacked(self):
         return not self.stealth

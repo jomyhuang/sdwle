@@ -60,6 +60,14 @@ def console_input_index(targets=[], prompt='>'):
     return selected
 
 
+def console_wait():
+    s = input('[]')
+    if s is 'q':
+        sys.exit(0)
+
+    return True
+
+
 def render_game():
     class ConsoleAgent:
 
@@ -86,11 +94,11 @@ def render_game():
                         #SDW rule
                         card = attacker.card
                         if card.is_facedown():
-                            #raise GameException('card is facedown')
                             card._placeholder = attacker
                             card.use(card.player, game)
-                            #card.facedown = False
+                            console(0, 0, 'face-up {0}'.format(card.name))
                         #attacker.attack()
+                        console_wait()
                 elif action == "power":
                     if player.hero.power.can_use():
                         player.hero.power.use()
@@ -152,8 +160,11 @@ def render_game():
             if len(filtered_cards) is 0:
                 return None
             renderer.targets = filtered_cards
-            renderer.selected_target = renderer.targets[0]
-            renderer.draw_game()
+
+            console(0, 0, 'choose attacker [0-{0}]'.format(len(filtered_cards)-1))
+            renderer.selected_target = console_input_index(renderer.targets[0])
+
+            # renderer.draw_game()
 
             # self.window.addstr(0, 0, "Choose Card")
             # self.window.refresh()
@@ -183,16 +194,20 @@ def render_game():
 
         def choose_attacker(self, player):
             #SDW rule
-            #TODO bug fix why can't filter minions
-            #filtered_attackers = [minion for minion in filter(lambda minion: minion.can_attack(), player.minions)]
-            filtered_attackers = player.minions
+            filtered_attackers = [minion for minion in filter(lambda minion: minion.can_attack(), player.minions)]
+            #filtered_attackers = player.minions
             #if player.hero.can_attack():
             #    filtered_attackers.append(player.hero)
             if len(filtered_attackers) is 0:
+                console(0,0,'没有精灵可以出战')
+                console_wait()
                 return None
 
-            # renderer.targets = filtered_attackers
-            # renderer.selected_target = renderer.targets[0]
+            renderer.targets = filtered_attackers
+            console(0, 0, 'choose attacker [0-{0}]'.format(len(filtered_attackers)-1))
+            selected = console_input_index(renderer.targets)
+            renderer.selected_target = filtered_attackers[selected]
+
             # renderer.draw_game()
             # self.window.addstr(0, 0, "Choose attacker")
             # self.window.refresh()
@@ -424,6 +439,9 @@ def render_game():
     game_window = None
     prompt_window = None
     text_window = None
+
+    console(0,0,'SEER DIMESIONS WAR 精灵战争 SDWLE project')
+    console(0,0,'================================================')
 
     agent = choose_agent(stdscr)
 
