@@ -47,6 +47,9 @@ def get_cards():
 
 
 class Game(Bindable):
+
+    Session = None
+
     def __init__(self, decks, agents):
         super().__init__()
         self.delayed_minions = set()
@@ -69,6 +72,7 @@ class Game(Bindable):
         self._all_cards_played = []
         self._turns_passed = 0
         self.selected_card = None
+        Game.Session = self
 
     def random_draw(self, cards, requirement):
         filtered_cards = [card for card in filter(requirement, cards)]
@@ -549,6 +553,13 @@ class Player(Bindable):
 
     def choose_target(self, targets):
         return self.agent.choose_target(targets)
+
+    #SDW rule
+    def playinfo(self, text):
+        return self.agent.playinfo(text)
+
+    def choose_support_card(self, targets):
+        return self.agent.choose_support_card(targets)
 
     def is_valid(self):
         return True

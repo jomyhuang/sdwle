@@ -446,6 +446,25 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
             targets.append(self.player.game.other_player.hero)
 
         target = self.choose_target(targets)
+
+        # SDW rule
+        card = target.card
+        if card.is_facedown():
+            card._placeholder = target
+            card.use(self.player, self.player.game)
+            self.player.playinfo('target face-up {0}'.format(card.name))
+            # SDW rule add attribute
+            target = card.faceup_minion
+
+        support_card = self.choose_support_card(self.player)
+        self.player.playinfo('my support {0}'.format(support_card.name))
+
+        other_support_card = self.player.game.other_player.choose_support_card(self.player.game.other_player)
+        self.player.playinfo('enemy support {0}'.format(other_support_card.name))
+
+
+
+
         self._remove_stealth()
         self.current_target = target
         self.player.trigger("character_attack", self, self.current_target)
@@ -471,6 +490,15 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
         :param list[Character] targets: the targets to choose a target from
         """
         return self.player.choose_target(targets)
+
+    def choose_support_card(self, player):
+        """
+        Consults the associated player to select a target from a list of targets
+
+        :param list[Character] targets: the targets to choose a target from
+        """
+        return self.player.choose_support_card(player)
+
 
     def calculate_stat(self, stat_class, starting_value=0):
         """
@@ -1012,7 +1040,8 @@ class Minion(Character):
     def can_attack(self):
         #SDW rule
         # return (self.charge() or not self.exhausted) and super().can_attack()
-        return (self.card.facedown or self.charge() or not self.exhausted) and super().can_attack()
+        #return (self.card.facedown or self.charge() or not self.exhausted) and super().can_attack()
+        return True
 
     def can_be_attacked(self):
         return not self.stealth

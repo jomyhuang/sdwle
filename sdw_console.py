@@ -78,6 +78,9 @@ def render_game():
             #curses.init_pair(5, curses.COLOR_WHITE, curses.COLOR_CYAN)
             #curses.init_pair(6, curses.COLOR_BLACK, curses.COLOR_GREEN)
 
+        def playinfo(self,text):
+            console(0, 0, text)
+
         def do_turn(self, player):
             renderer.draw_game()
             index = 0
@@ -87,6 +90,7 @@ def render_game():
                     card = self.choose_card(player)
                     if card is not None:
                         player.game.play_card(card)
+
                 elif action == "attack":
                     #SDW rule
                     attacker = self.choose_attacker(player)
@@ -97,14 +101,20 @@ def render_game():
                             card._placeholder = attacker
                             card.use(card.player, game)
                             console(0, 0, 'face-up {0}'.format(card.name))
-                        #attacker.attack()
+                            #SDW rule add attribute
+                            attacker = card.faceup_minion
+                        #SDW 发动进攻
+                        attacker.attack()
                         console_wait()
+
                 elif action == "power":
                     if player.hero.power.can_use():
                         player.hero.power.use()
+
                 index += 1
                 renderer.draw_game()
                 action = self.choose_action()
+
             if action == "quit":
                 console(0,0,'good-bye')
                 sys.exit(0)
@@ -161,7 +171,7 @@ def render_game():
                 return None
             renderer.targets = filtered_cards
 
-            console(0, 0, 'choose attacker [0-{0}]'.format(len(filtered_cards)-1))
+            console(0, 0, 'choose card [0-{0}]'.format(len(filtered_cards)-1))
             renderer.selected_target = console_input_index(renderer.targets[0])
 
             # renderer.draw_game()
@@ -189,6 +199,19 @@ def render_game():
             # renderer.targets = None
             # if ch == 27:
             #     return None
+
+            return renderer.selected_target
+
+        def choose_support_card(self, player):
+            filtered_cards = [card for card in filter(lambda card: card.can_use(player, player.game), player.hand)]
+            if len(filtered_cards) is 0:
+                console(0, 0, 'no support card')
+                return None
+            renderer.targets = filtered_cards
+
+            console(0, 0, 'choose support card [0-{0}]'.format(len(filtered_cards)-1))
+            selected = console_input_index(renderer.targets)
+            renderer.selected_target = filtered_cards[selected]
 
             return renderer.selected_target
 
@@ -313,8 +336,22 @@ def render_game():
             if len(targets) is 0:
                 return None
 
-            # renderer.targets = targets
-            # renderer.selected_target = renderer.targets[0]
+            renderer.targets = targets
+            console(0, 0, 'choose target [0-{0}]'.format(len(targets)-1))
+            selected = console_input_index(renderer.targets)
+
+            renderer.selected_target = renderer.targets[selected]
+
+            # # SDW rule
+            # target = renderer.selected_target
+            # card = target.card
+            # if card.is_facedown():
+            #     card._placeholder = target
+            #     card.use(card.player, game)
+            #     console(0, 0, 'target face-up {0}'.format(card.name))
+            #     # SDW rule add attribute
+            #     renderer.selected_target = card.faceup_minion
+
             # renderer.draw_game()
             # self.window.addstr(0, 0, "Choose target")
             # self.window.refresh()

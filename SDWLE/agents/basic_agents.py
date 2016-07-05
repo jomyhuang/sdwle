@@ -32,6 +32,12 @@ class Agent(metaclass=abc.ABCMeta):
             return [option for option in options if option.can_choose(player)]
         return [option for option in options if option.card.can_choose(player)]
 
+    #SDW rule
+    def playinfo(self,text):
+        pass
+
+    def choose_support_card(self, player):
+        pass
 
 class DoNothingAgent(Agent):
     def __init__(self):
