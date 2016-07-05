@@ -58,6 +58,9 @@ class DoNothingAgent(Agent):
     def choose_option(self, options, player):
         return self.filter_options(options, player)[0]
 
+    def choose_support_card(self, player):
+        return player.hand[0]
+
 
 class PredictableAgent(Agent):
     def do_card_check(self, cards):

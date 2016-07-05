@@ -440,14 +440,15 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
             if enemy.can_be_attacked():
                 targets.append(enemy)
 
-        if found_taunt:
-            targets = [target for target in targets if target.taunt]
-        else:
-            targets.append(self.player.game.other_player.hero)
+        # if found_taunt:
+        #     targets = [target for target in targets if target.taunt]
+        # else:
+        #     targets.append(self.player.game.other_player.hero)
 
         target = self.choose_target(targets)
 
         # SDW rule
+        # TODO SDW special attack phase
         card = target.card
         if card.is_facedown():
             card._placeholder = target
@@ -462,9 +463,7 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
         other_support_card = self.player.game.other_player.choose_support_card(self.player.game.other_player)
         self.player.playinfo('enemy support {0}'.format(other_support_card.name))
 
-
-
-
+        #TODO SDW damage calculate
         self._remove_stealth()
         self.current_target = target
         self.player.trigger("character_attack", self, self.current_target)

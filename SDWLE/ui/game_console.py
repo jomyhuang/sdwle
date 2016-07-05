@@ -109,7 +109,7 @@ class ConsoleGameRender:
         #console(y+2, x, "{0:^9}".format(status), color)
         # window.addstr(y + 2, x, "{0}".format(minion.index), color)
 
-    def draw_card(self, card, player, window, y, x):
+    def draw_card(self, card, player, index, window, y, x):
         color = 0
         if card.can_use(player, player.game):
             status = "*"
@@ -127,7 +127,7 @@ class ConsoleGameRender:
 
         name = card.name[:15]
 
-        console(y + 0, x, "{0:>2} mana ({1}) {2:^15}   ".format(card.mana_cost(), status, name), color)
+        console(y + 0, x, "{0}:{1:>2} mana ({2}) {3:^15}   ".format(index, card.mana_cost(), status, name), color)
         # console(y + 1, x, "{0:^15}".format(name), color)
 
     def draw_hero(self, player, window, x, y):
@@ -175,7 +175,7 @@ class ConsoleGameRender:
             l_offset = int((80 - 16 * len(cards)) / 2)
             index = 0
             for card in cards:
-                self.draw_card(card, player, window, y, l_offset + index * 16)
+                self.draw_card(card, player, index, window, y, l_offset + index * 16)
                 index += 1
 
         draw_minions(self.top_player.minions, self.top_minion_window, False)

@@ -107,7 +107,9 @@ class Card(Bindable, GameObject):
         """
         if game.game_ended:
             return False
-        return player.mana >= self.mana_cost()
+        #SDW rule
+        #return player.mana >= self.mana_cost()
+        return True
 
     def mana_cost(self):
         """
