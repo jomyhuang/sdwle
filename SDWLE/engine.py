@@ -268,6 +268,7 @@ class Game(Bindable):
         facedown_minion.card = card
         facedown_minion.player = card.player
         facedown_minion.game = self
+        #TODO 取消 addboard insert?
         index = len(card.player.minions)
         facedown_minion.add_to_board(index)
         card._placeholder = facedown_minion

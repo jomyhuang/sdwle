@@ -909,6 +909,7 @@ class Minion(Character):
                     if aura.match(minion):
                         aura_affects[aura].add(minion)
         self.game.minion_counter += 1
+        #TODO 取消insert? 必要性?
         self.player.minions.insert(index, self)
         self.born = self.game.minion_counter
         self.index = index
