@@ -98,11 +98,11 @@ def render_game():
                         #SDW rule
                         card = attacker.card
                         if card.is_facedown():
-                            card._placeholder = attacker
+                            #card._placeholder = attacker
                             card.use(card.player, game)
                             console(0, 0, 'face-up {0}'.format(card.name))
                             #SDW rule add attribute
-                            attacker = card.faceup_minion
+                            attacker = card.main_minion
                         #SDW 发动进攻
                         attacker.attack()
                         console_wait()
@@ -231,152 +231,21 @@ def render_game():
             selected = console_input_index(renderer.targets)
             renderer.selected_target = filtered_attackers[selected]
 
-            # renderer.draw_game()
-            # self.window.addstr(0, 0, "Choose attacker")
-            # self.window.refresh()
-            # ch = 0
-            # index = 0
-            # while ch != 10 and ch != 27:
-            #     ch = self.game_window.getch()
-            #     self.window.addstr(0, 0, "{0}".format(ch))
-            #     self.window.refresh()
-            #     if ch == curses.KEY_LEFT:
-            #         index -= 1
-            #         if index < 0:
-            #             index = len(renderer.targets) - 1
-            #     if ch == curses.KEY_RIGHT:
-            #         index += 1
-            #         if index == len(renderer.targets):
-            #             index = 0
-            #     renderer.selected_target = renderer.targets[index]
-            #     renderer.draw_game()
-            #     #fix
-            #     self.window.addstr(0, 0, "Choose attacker")
-            #     self.window.refresh()
-            #
-            # renderer.targets = None
-            # if ch == 27:
-            #     return None
-
             return renderer.selected_target
 
         def do_card_check(self, cards):
-
             keeping = [True, True, True, True, True]
-
-            # self.game_window.clear()
-            # #fix
-            # #self.window.addstr(0, 0, "Select cards to keep (space selects/deselects a card)")
-            # self.game_window.addstr(10, 0, "Select cards to keep (space selects/deselects a card). esc to 离开")
-            #
-            # if len(cards) > 3:
-            #     keeping.append(True)
-            # index = 0
-            # selected = 0
-            # for card in cards:
-            #     if keeping[index]:
-            #         if index == selected:
-            #             color = curses.color_pair(6)
-            #         else:
-            #             color = curses.color_pair(5)
-            #     else:
-            #         if index == selected:
-            #             color = curses.color_pair(4)
-            #         else:
-            #             color = curses.color_pair(0)
-            #
-            #     #self.text_window.addstr(0, index * 20, "{0:^19}".format(card.name[:19]), color)
-            #     self.game_window.addstr(11, index * 15, "{0:^14}".format(card.name[:14]), color)
-            #
-            #     index += 1
-            #
-            # self.window.refresh()
-            # #self.text_window.refresh()
-            #
-            # ch = 0
-            # while ch != 10 and ch != 27:
-            #     ch = self.game_window.getch()
-            #     if ch == curses.KEY_LEFT:
-            #         selected -= 1
-            #         if selected < 0:
-            #             selected = len(cards) - 1
-            #     if ch == curses.KEY_RIGHT:
-            #         selected += 1
-            #         if selected == len(cards):
-            #             selected = 0
-            #     if ch == 32:
-            #         keeping[selected] = not keeping[selected]
-            #     index = 0
-            #     for card in cards:
-            #         if keeping[index]:
-            #             if index == selected:
-            #                 color = curses.color_pair(6)
-            #             else:
-            #                 color = curses.color_pair(5)
-            #         else:
-            #             if index == selected:
-            #                 color = curses.color_pair(4)
-            #             else:
-            #                 color = curses.color_pair(0)
-            #
-            #         #self.text_window.addstr(0, index * 20, "{0:^19}".format(card.name[:19]), color)
-            #         self.game_window.addstr(11, index * 15, "{0:^14}".format(card.name[:14]), color)
-            #         index += 1
-            #
-            #     self.game_window.refresh()
-            #     #self.text_window.refresh()
-            # if ch == 27:
-            #     #return None
-            #     sys.exit(0)
-
             return keeping
 
         def choose_target(self, targets):
-
-            if len(targets) is 0:
+           if len(targets) is 0:
                 return None
+           renderer.targets = targets
+           console(0, 0, 'choose target [0-{0}]'.format(len(targets)-1))
+           selected = console_input_index(renderer.targets)
+           renderer.selected_target = renderer.targets[selected]
 
-            renderer.targets = targets
-            console(0, 0, 'choose target [0-{0}]'.format(len(targets)-1))
-            selected = console_input_index(renderer.targets)
-
-            renderer.selected_target = renderer.targets[selected]
-
-            # # SDW rule
-            # target = renderer.selected_target
-            # card = target.card
-            # if card.is_facedown():
-            #     card._placeholder = target
-            #     card.use(card.player, game)
-            #     console(0, 0, 'target face-up {0}'.format(card.name))
-            #     # SDW rule add attribute
-            #     renderer.selected_target = card.faceup_minion
-
-            # renderer.draw_game()
-            # self.window.addstr(0, 0, "Choose target")
-            # self.window.refresh()
-            # ch = 0
-            # index = 0
-            # while ch != 10 and ch != 27:
-            #     ch = self.game_window.getch()
-            #     if ch == curses.KEY_LEFT:
-            #         index -= 1
-            #         if index < 0:
-            #             index = len(renderer.targets) - 1
-            #     if ch == curses.KEY_RIGHT:
-            #         index += 1
-            #         if index == len(renderer.targets):
-            #             index = 0
-            #     renderer.selected_target = renderer.targets[index]
-            #     renderer.draw_game()
-            #     #fix
-            #     self.window.addstr(0, 0, "Choose target")
-            #     self.window.refresh()
-            # renderer.targets = None
-            # if ch == 27:
-            #     return None
-
-            return renderer.selected_target
+           return renderer.selected_target
 
         def choose_index(self, card, player):
 

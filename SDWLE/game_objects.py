@@ -432,6 +432,9 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
         if not self.can_attack():
             raise GameException("That minion cannot attack")
 
+        if self.facedown:
+            raise GameException('attacker is facedown!')
+
         found_taunt = False
         targets = []
         for enemy in self.player.game.other_player.minions:
@@ -451,14 +454,15 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
         # TODO SDW special attack phase
         card = target.card
         if card.is_facedown():
-            card._placeholder = target
+            # card._placeholder = target
             card.use(self.player, self.player.game)
             self.player.playinfo('target face-up {0}'.format(card.name))
             # SDW rule add attribute
-            target = card.faceup_minion
+            target = card.main_minion
 
         support_card = self.choose_support_card(self.player)
         self.player.playinfo('my support {0}'.format(support_card.name))
+        #TODO use support card on minion
 
         other_support_card = self.player.game.other_player.choose_support_card(self.player.game.other_player)
         self.player.playinfo('enemy support {0}'.format(other_support_card.name))
@@ -863,7 +867,7 @@ class Minion(Character):
     def __init__(self, attack, health,
                  deathrattle=None, taunt=False, charge=False, spell_damage=0, divine_shield=False, stealth=False,
                  windfury=False, spell_targetable=True, effects=None, auras=None, buffs=None,
-                 enrage=None):
+                 enrage=None, facedown=False):
         super().__init__(attack, health, enrage, effects, auras, buffs)
         self.game = None
         self.card = None
@@ -871,6 +875,7 @@ class Minion(Character):
         self.taunt = 0
         self.replaced_by = None
         self.can_be_targeted_by_spells = True
+        self.facedown = facedown
         if deathrattle:
             if isinstance(deathrattle, Deathrattle):
                 self.deathrattle = [deathrattle]

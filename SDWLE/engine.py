@@ -251,7 +251,7 @@ class Game(Bindable):
         return copied_game
 
     #SDW rule
-    def play_card_facedown(self, card, place_index=-1):
+    def play_card_facedown(self, card):
         if self.game_ended:
             raise GameException("The game has ended")
         #if not card.can_use(self.current_player, self):
@@ -264,12 +264,13 @@ class Game(Bindable):
         #SDW rule
         card.facedown = True
 
-        facedown = Minion(0, 0)
-        facedown.card = card
-        facedown.player = card.player
-        facedown.game = self
-        index = len(card.player.minions)+1
-        facedown.add_to_board(index)
+        facedown_minion = Minion(0, 0, facedown=True)
+        facedown_minion.card = card
+        facedown_minion.player = card.player
+        facedown_minion.game = self
+        index = len(card.player.minions)
+        facedown_minion.add_to_board(index)
+        card._placeholder = facedown_minion
 
         #if card.is_minion():
         #if True:
@@ -281,7 +282,7 @@ class Game(Bindable):
         #    card._placeholder.index = index
         #    card._placeholder.card = card
         #    card._placeholder.player = card.player
-        card.player.trigger("card_played_facedown", card, 0)
+        card.player.trigger("card_played_facedown", card, facedown_minion)
 
         #if not card.cancel:
         #    card.use(self.current_player, self)
@@ -292,10 +293,14 @@ class Game(Bindable):
         #card.current_target = None
 
     def play_card(self, card):
+        raise GameException('play_card not work yet!')
         if self.game_ended:
             raise GameException("The game has ended")
         if not card.can_use(self.current_player, self):
             raise GameException("That card cannot be used")
+        if card.facedown:
+            raise GameException("play card is facedown/error")
+
         card_index = self.current_player.hand.index(card)
         self.current_player.hand.pop(card_index)
         self.current_player.mana -= card.mana_cost()

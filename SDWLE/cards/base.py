@@ -223,6 +223,8 @@ class MinionCard(Card, metaclass=abc.ABCMeta):
         self.choices = choices
         self.combo = combo
         self._placeholder = None
+        self.main_minion = None
+        self.support_minion = None
 
     def can_use(self, player, game):
         """
@@ -266,28 +268,30 @@ class MinionCard(Card, metaclass=abc.ABCMeta):
         minion.card = self
         minion.player = player
         minion.game = game
+        self.main_minion = minion
 
         #SDW rule
-        if minion.card.is_facedown():
+        # if minion.card.is_facedown():
+        if self.is_facedown():
             if self._placeholder:
                 m = self._placeholder
                 self.facedown = False
                 m.replace(minion)
-                self.faceup_minion = minion
+                self._placeholder = None
                 #raise GameException('face up')
             else:
                 raise GameException('card use no place holder')
         else:
-            # TODO Add a test to make sure that this is a valid index, or things shall explode
             if self._placeholder:
                 minion.index = self._placeholder.index
                 player.minions.remove(self._placeholder)
-                for m in player.minions[minion.index:]:
-                    m.index -= 1
+                # for m in player.minions[minion.index:]:
+                #     m.index -= 1
             else:
                 #minion.index = player.agent.choose_index(self, player)
-                raise GameException('card use choose index error')
+                raise GameException('card use no place holder')
             minion.add_to_board(minion.index)
+            self._placeholder = None
 
         card_attack = self.calculate_stat(ChangeAttack, 0)
         if card_attack:
