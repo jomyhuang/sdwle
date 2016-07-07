@@ -156,6 +156,7 @@ class Game(Bindable):
 
     def play_single_turn(self):
         self._start_turn()
+        print('start Turn:{0}'.format(self._turns_passed))
         self.current_player.agent.do_turn(self.current_player)
         self._end_turn()
 
@@ -168,7 +169,9 @@ class Game(Bindable):
         else:
             self.current_player = self.players[0]
             self.other_player = self.players[1]
-            self._turns_passed += 1
+            # self._turns_passed += 1
+        #SDW rule 更换玩家就增加回合数
+        self._turns_passed += 1
         if self._turns_passed >= 50:
             self.players[0].hero.dead = True
             self.players[1].hero.dead = True
@@ -268,9 +271,8 @@ class Game(Bindable):
         facedown_minion.card = card
         facedown_minion.player = card.player
         facedown_minion.game = self
-        #TODO 取消 addboard insert?
-        index = len(card.player.minions)
-        facedown_minion.add_to_board(index)
+        #index = len(card.player.minions)
+        facedown_minion.add_to_board()
         card._placeholder = facedown_minion
 
         #if card.is_minion():
@@ -292,6 +294,56 @@ class Game(Bindable):
         #    self.current_player.cards_played += 1
         #    self.check_delayed()
         #card.current_target = None
+
+    def play_support_card(self, card, target_card):
+        if self.game_ended:
+            raise GameException("The game has ended")
+        if not card.can_use(self.current_player, self):
+            raise GameException("That card cannot be used")
+        if card.facedown:
+            raise GameException("play support card is facedown/error")
+        if not card.is_minion():
+            raise GameException('support card is not minion card')
+
+        #SDW rule fix card player from Card not/ game.current_player
+        #修正非玩家回合出牌的函数绑定
+        card_player = card.player
+        # card_index = self.current_player.hand.index(card)
+        card_index = card_player.hand.index(card)
+        card_player.hand.pop(card_index)
+
+        # self.current_player.mana -= card.mana_cost()
+        self._all_cards_played.append(card)
+        card.target = target_card
+        card.current_target = None
+        # if card.targetable and card.targets:
+        #     card.target = self.current_player.agent.choose_target(card.targets)
+
+        self.last_card = card
+        # if card.is_minion():
+
+            # card._placeholder = Minion(0, 0)
+            # index = self.current_player.agent.choose_index(card, self.current_player)
+            # for minion in self.current_player.minions[index:]:
+            #     minion.index += 1
+            # self.current_player.minions.insert(index, card._placeholder)
+            # card._placeholder.index = index
+            # card._placeholder.card = card
+            # card._placeholder.player = self.current_player
+        card_player.trigger("support_card_played", card, target_card)
+
+        if not card.cancel:
+            card.use(card_player, self, support=True, target_card=target_card)
+            card.unattach()
+            card_player.trigger("support_card_used", card)
+            card_player.cards_played += 1
+            self.check_delayed()
+
+        card.current_target = None
+
+        # overload is applied regardless of counterspell, but after the card is played
+        self.current_player.upcoming_overload += card.overload
+
 
     def play_card(self, card):
         raise GameException('play_card not work yet!')
@@ -317,6 +369,7 @@ class Game(Bindable):
             index = self.current_player.agent.choose_index(card, self.current_player)
             for minion in self.current_player.minions[index:]:
                 minion.index += 1
+            #TODO 取消insert?
             self.current_player.minions.insert(index, card._placeholder)
             card._placeholder.index = index
             card._placeholder.card = card
@@ -634,7 +687,7 @@ class Player(Bindable):
 
 class Deck:
     def __init__(self, cards, hero):
-        #SDW rule TODO
+        #SDW rule TODO deck numbers
         if len(cards) != 30:
             raise GameException("Deck must have exactly 30 cards in it")
         self.cards = cards

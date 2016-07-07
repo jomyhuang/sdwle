@@ -223,8 +223,10 @@ class MinionCard(Card, metaclass=abc.ABCMeta):
         self.choices = choices
         self.combo = combo
         self._placeholder = None
+        #SDW rule
         self.main_minion = None
-        self.support_minion = None
+        self.support = False
+
 
     def can_use(self, player, game):
         """
@@ -235,7 +237,7 @@ class MinionCard(Card, metaclass=abc.ABCMeta):
         """
         return len(player.minions) < 7 and super().can_use(player, game)
 
-    def use(self, player, game):
+    def use(self, player, game, support=False, target_card=None):
         """
         Adds this minion to the board for the given player, if the card is able to be played.  The agent for the
         given player will be consulted about the location on the board of the played minion, about the target
@@ -268,30 +270,33 @@ class MinionCard(Card, metaclass=abc.ABCMeta):
         minion.card = self
         minion.player = player
         minion.game = game
+        #SDW rule main minion纪录召唤的minion object
         self.main_minion = minion
+        self.support = support
 
         #SDW rule
-        # if minion.card.is_facedown():
-        if self.is_facedown():
-            if self._placeholder:
-                m = self._placeholder
-                self.facedown = False
-                m.replace(minion)
+        if not self.support:
+            if self.is_facedown():
+                if self._placeholder:
+                    m = self._placeholder
+                    self.facedown = False
+                    m.replace(minion)
+                    self._placeholder = None
+                else:
+                    raise GameException('card use no place holder')
+            else:
+                if self._placeholder:
+                    minion.index = self._placeholder.index
+                    player.minions.remove(self._placeholder)
+                else:
+                    #minion.index = player.agent.choose_index(self, player)
+                    raise GameException('card use no place holder')
+                minion.add_to_board(minion.index)
                 self._placeholder = None
-                #raise GameException('face up')
-            else:
-                raise GameException('card use no place holder')
         else:
-            if self._placeholder:
-                minion.index = self._placeholder.index
-                player.minions.remove(self._placeholder)
-                # for m in player.minions[minion.index:]:
-                #     m.index -= 1
-            else:
-                #minion.index = player.agent.choose_index(self, player)
-                raise GameException('card use no place holder')
-            minion.add_to_board(minion.index)
-            self._placeholder = None
+            #raise GameException('card use support')
+            target_minion = target_card.main_minion
+            self.main_minion.add_to_support(target_minion)
 
         card_attack = self.calculate_stat(ChangeAttack, 0)
         if card_attack:

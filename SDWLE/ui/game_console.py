@@ -99,12 +99,13 @@ class ConsoleGameRender:
         name = abbreviate(minion.card.name)[:9]
         status = ''.join(status_array)
         power_line = "({0}) ({1})".format(minion.calculate_attack(), minion.health)
+        facedown = ''
 
         if minion.card.is_facedown():
-            name = 'facedown'
+            facedown = 'facedown'
             #status = 'facedown'
 
-        console(y, x, "{0}{1}:{2:^9} {3:^9} {4:^9}".format(spaces, minion.index, name, power_line, status), color)
+        console(y, x, "{0}{1}:{2} {3:^9} {4:^9} {5:^9}".format(spaces, minion.index, facedown, name, power_line, status), color)
         #console(y+1, x,"{0:^9}".format(power_line), color)
         #console(y+2, x, "{0:^9}".format(status), color)
         # window.addstr(y + 2, x, "{0}".format(minion.index), color)
@@ -153,8 +154,7 @@ class ConsoleGameRender:
         pass
 
     def draw_game(self):
-        console(0,0,'UI-draw_game')
-
+        # console(0,0,'draw_game Turn:{0}'.format(self.game._turns_passed))
         # self.window.clear()
         # self.bottom_minion_window.clear()
         # self.top_minion_window.clear()

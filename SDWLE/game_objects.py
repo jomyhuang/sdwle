@@ -452,34 +452,60 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
 
         # SDW rule
         # TODO SDW special attack phase
-        card = target.card
-        if card.is_facedown():
+        target_card = target.card
+        if target_card.is_facedown():
             # card._placeholder = target
-            card.use(self.player, self.player.game)
-            self.player.playinfo('target face-up {0}'.format(card.name))
+            target_card.use(self.player, self.player.game)
+            self.player.playinfo('target enemy face-up {0}'.format(target_card.name))
             # SDW rule add attribute
-            target = card.main_minion
+            target = target_card.main_minion
 
         support_card = self.choose_support_card(self.player)
         self.player.playinfo('my support {0}'.format(support_card.name))
-        #TODO use support card on minion
 
-        other_support_card = self.player.game.other_player.choose_support_card(self.player.game.other_player)
-        self.player.playinfo('enemy support {0}'.format(other_support_card.name))
+        self.player.game.play_support_card(support_card, self.card)
+        self.player.playinfo('support minions {0} {1}'.format(len(self.support_minions),self.support_minions[0].card.name))
+
+        support_minion = self.support_minions[0]
+
+        other_player = self.player.game.other_player
+        target_support_card = other_player.choose_support_card(self.player.game.other_player)
+        self.player.playinfo('enemy support {0}'.format(target_support_card.name))
+
+        other_player.game.play_support_card(target_support_card, target_card)
+        # self.player.playinfo('enemy support minions {0} {1}'.format(len(card_enemy.main_minion.support_minions),card_enemy.main_minion.support_minions[0].card.name))
+        self.player.playinfo('enemy support minions {0} {1}'.format(len(target.support_minions),target.support_minions[0].card.name))
+
+        target_support_minion = target.support_minions[0]
+
 
         #TODO SDW damage calculate
+        #TODO 处理无/or 多精灵支援
         self._remove_stealth()
         self.current_target = target
         self.player.trigger("character_attack", self, self.current_target)
         self.trigger("attack", self.current_target)
         if self.removed or self.dead:  # removed won't be set yet if the Character died during this attack
             return
-        target = self.current_target
         my_attack = self.calculate_attack()  # In case the damage causes my attack to grow
+        my_attack_support = support_minion.calculate_attack()
+        my_attack_power = my_attack + my_attack_support
+        self.health = my_attack_power
+
+        # target = self.current_target
         target_attack = target.calculate_attack()
+        target_attack_support = target_support_minion.calculate_attack()
+        target_attack_power = target_attack + target_attack_support
+        target.health = target_attack_power
+
+        #伤害处理
+        target.sdw_damage(my_attack_power, self)
         if target_attack > 0:
-            self.damage(target_attack, target)
-        target.damage(my_attack, self)
+            self.sdw_damage(target_attack_power, target)
+
+        self.player.playinfo('my attack {0} vs target {1}'.format(my_attack_power, target_attack_power))
+
+        #启动delay tigger/移除战斗死亡/学习机制 -》更换精灵
         self.player.game.check_delayed()
         self.trigger("attack_completed")
         self.attacks_performed += 1
@@ -564,6 +590,39 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
 
         self.delayed = []
 
+    def sdw_damage(self, amount, attacker):
+        """
+        SDW rule perform damage
+        :param int amount: The amount of damage done (should be positive)
+        :param Object attacker: The :class:`Character`or :class:`SpellCard that did the damage or ``None``.
+        """
+        if self.dead:
+            return
+        self.player.trigger("pre_damage", self, attacker, amount)
+
+        if attacker and attacker.is_character() and self.health >= 0:
+            self.health -= amount
+            attacker.trigger("did_damage", self, amount)
+            attacker._remove_stealth()
+        else:
+            raise GameException('sdw_damage is not is_character')
+            self.health -= amount
+        # min_health = self.calculate_stat(MinimumHealth, 0)
+        # if self.health < min_health:
+        #     self.health = min_health
+        self.trigger("damaged", amount, attacker)
+        self.player.trigger("character_damaged", self, attacker, amount)
+        if self.health <= 0:
+            self.die(attacker)
+            # self.trigger("health_changed")
+            # if not self.enraged and self.health != self.calculate_max_health():
+            #     self.enraged = True
+            #     self.trigger("enraged")
+            #     self._do_enrage()
+        else:
+            pass
+            # 处理更换战斗精灵
+
     def damage(self, amount, attacker):
         """
         Deal damage to this :class:`Character`.  This method uses the ``attacker`` parameter to determine the nature
@@ -578,33 +637,34 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
         :param int amount: The amount of damage done (should be positive)
         :param Object attacker: The :class:`Character`or :class:`SpellCard that did the damage or ``None``.
         """
-        if self.dead:
-            return
-        self.player.trigger("pre_damage", self, attacker, amount)
-        if not self.immune:
-            # This is constructed to avoid infinite recursion when mistress of pain and auchenai soulpriest
-            # are in use.  This will prevent the did_damage event from going off if the character being damaged is
-            # already dead.
-            # We could simply do the check for death before this, but then the Mistress of Pain can't bring a dead
-            # hero back to life after damaging it via misdirection.
-            if attacker and attacker.is_character() and self.health >= 0:
-                self.health -= amount
-                attacker.trigger("did_damage", self, amount)
-                attacker._remove_stealth()
-            else:
-                self.health -= amount
-            min_health = self.calculate_stat(MinimumHealth, 0)
-            if self.health < min_health:
-                self.health = min_health
-            self.trigger("damaged", amount, attacker)
-            self.player.trigger("character_damaged", self, attacker, amount)
-            if self.health <= 0:
-                self.die(attacker)
-            self.trigger("health_changed")
-            if not self.enraged and self.health != self.calculate_max_health():
-                self.enraged = True
-                self.trigger("enraged")
-                self._do_enrage()
+        raise GameException('damge function is cancel')
+        # if self.dead:
+        #     return
+        # self.player.trigger("pre_damage", self, attacker, amount)
+        # if not self.immune:
+        #     # This is constructed to avoid infinite recursion when mistress of pain and auchenai soulpriest
+        #     # are in use.  This will prevent the did_damage event from going off if the character being damaged is
+        #     # already dead.
+        #     # We could simply do the check for death before this, but then the Mistress of Pain can't bring a dead
+        #     # hero back to life after damaging it via misdirection.
+        #     if attacker and attacker.is_character() and self.health >= 0:
+        #         self.health -= amount
+        #         attacker.trigger("did_damage", self, amount)
+        #         attacker._remove_stealth()
+        #     else:
+        #         self.health -= amount
+        #     min_health = self.calculate_stat(MinimumHealth, 0)
+        #     if self.health < min_health:
+        #         self.health = min_health
+        #     self.trigger("damaged", amount, attacker)
+        #     self.player.trigger("character_damaged", self, attacker, amount)
+        #     if self.health <= 0:
+        #         self.die(attacker)
+        #     self.trigger("health_changed")
+        #     if not self.enraged and self.health != self.calculate_max_health():
+        #         self.enraged = True
+        #         self.trigger("enraged")
+        #         self._do_enrage()
 
     def change_attack(self, amount):
         """
@@ -861,8 +921,6 @@ class Weapon(Bindable, GameObject):
 
 
 
-
-
 class Minion(Character):
     def __init__(self, attack, health,
                  deathrattle=None, taunt=False, charge=False, spell_damage=0, divine_shield=False, stealth=False,
@@ -875,7 +933,9 @@ class Minion(Character):
         self.taunt = 0
         self.replaced_by = None
         self.can_be_targeted_by_spells = True
+        #SDW rule
         self.facedown = facedown
+        self.support_minions = []
         if deathrattle:
             if isinstance(deathrattle, Deathrattle):
                 self.deathrattle = [deathrattle]
@@ -900,7 +960,7 @@ class Minion(Character):
         if spell_damage:
             self.buffs.append(Buff(SpellDamage(spell_damage)))
 
-    def add_to_board(self, index):
+    def add_to_board(self, index=0):
         aura_affects = {}
         for player in self.game.players:
             for aura in player.object_auras:
@@ -909,11 +969,12 @@ class Minion(Character):
                     if aura.match(minion):
                         aura_affects[aura].add(minion)
         self.game.minion_counter += 1
-        #TODO 取消insert? 必要性?
-        self.player.minions.insert(index, self)
+        #SDW rule 取消minion insert
+        # self.player.minions.insert(index, self)
+        self.player.minions.append(self)
         self.born = self.game.minion_counter
-        self.index = index
         # SDW rule - 重新建立 minions index
+        #self.index = index
         newindex = 0
         for minion in self.player.minions:
             minion.index = newindex
@@ -931,6 +992,37 @@ class Minion(Character):
                         elif is_in and not aura.match(minion):
                             aura.status.unact(aura.owner, minion)
         self.trigger("added_to_board", self, index)
+
+    def add_to_support(self, main):
+        aura_affects = {}
+        for player in self.game.players:
+            for aura in player.object_auras:
+                aura_affects[aura] = set()
+                for minion in self.player.minions:
+                    if aura.match(minion):
+                        aura_affects[aura].add(minion)
+        self.game.minion_counter += 1
+        main.support_minions.append(self)
+        self.born = self.game.minion_counter
+        # SDW rule - 重新建立 minions index
+        newindex = 0
+        for minion in main.support_minions:
+            minion.index = newindex
+            newindex += 1
+
+        self.health += self.calculate_max_health() - self.base_health - self.health_delta
+        self.attach(self, self.player)
+        for player in self.game.players:
+            for aura in player.object_auras:
+                for minion in self.player.minions:
+                    if aura in aura_affects:
+                        is_in = minion in aura_affects[aura]
+                        if not is_in and aura.match(minion):
+                            aura.status.act(aura.owner, minion)
+                        elif is_in and not aura.match(minion):
+                            aura.status.unact(aura.owner, minion)
+        self.trigger("added_to_support_minion", self, main)
+
 
     def calculate_attack(self):
         """
@@ -1004,12 +1096,20 @@ class Minion(Character):
     def attack(self):
         super().attack()
 
+    def sdw_damage(self, amount, attacker):
+        # if self.divine_shield:
+        #     self.buffs = [buff for buff in self.buffs if not isinstance(buff.status, DivineShield)]
+        #     self.divine_shield = 0
+        # else:
+        super().sdw_damage(amount, attacker)
+
     def damage(self, amount, attacker):
-        if self.divine_shield:
-            self.buffs = [buff for buff in self.buffs if not isinstance(buff.status, DivineShield)]
-            self.divine_shield = 0
-        else:
-            super().damage(amount, attacker)
+        raise GameException('minion damage function is cancel')
+        # if self.divine_shield:
+        #     self.buffs = [buff for buff in self.buffs if not isinstance(buff.status, DivineShield)]
+        #     self.divine_shield = 0
+        # else:
+        #     super().damage(amount, attacker)
 
     def heal(self, amount, source):
         super().heal(amount, source)
@@ -1031,8 +1131,8 @@ class Minion(Character):
                 self.player.trigger("minion_died", self, by)
                 # Used to activate any secrets applied during the death phase
                 self.player.trigger("after_death", self.player)
-
                 self.player.graveyard.append(self.card.name)
+
             self.bind_once("died", delayed_death)
             super().die(by)
             self.player.dead_this_turn.append(self)

@@ -47,6 +47,8 @@ class DoNothingAgent(Agent):
         return [True, True, True, True, True]
 
     def do_turn(self, player):
+        #SDW rule
+        print('DoNothingAgent I pass this turn')
         pass
 
     def choose_target(self, targets):
