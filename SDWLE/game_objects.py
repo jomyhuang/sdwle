@@ -481,6 +481,8 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
 
         #TODO SDW damage calculate
         #TODO 处理无/or 多精灵支援
+        #TODO 标记进攻方、防守方标签
+        #TODO 处理战斗ATH克制
         self._remove_stealth()
         self.current_target = target
         self.player.trigger("character_attack", self, self.current_target)
@@ -498,12 +500,24 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
         target_attack_power = target_attack + target_attack_support
         target.health = target_attack_power
 
+        self.player.playinfo('my attack {0} vs target {1}'.format(my_attack_power, target_attack_power))
+
         #伤害处理
         target.sdw_damage(my_attack_power, self)
         if target_attack > 0:
             self.sdw_damage(target_attack_power, target)
 
-        self.player.playinfo('my attack {0} vs target {1}'.format(my_attack_power, target_attack_power))
+        #TODO 标记胜负
+
+        #更换精灵
+        if self.health > 0:
+            self.tired(support_minion)
+            self.player.playinfo('perform tired new minion {0}'.format(support_minion.card.name))
+
+        if target.health > 0:
+            target.tired(target_support_minion)
+            self.player.playinfo('target perform tired new minion {0}'.format(target_support_minion.card.name))
+
 
         #启动delay tigger/移除战斗死亡/学习机制 -》更换精灵
         self.player.game.check_delayed()
@@ -606,7 +620,7 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
             attacker._remove_stealth()
         else:
             raise GameException('sdw_damage is not is_character')
-            self.health -= amount
+            # self.health -= amount
         # min_health = self.calculate_stat(MinimumHealth, 0)
         # if self.health < min_health:
         #     self.health = min_health
@@ -622,6 +636,10 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
         else:
             pass
             # 处理更换战斗精灵
+
+    # SDW rule 主战斗精灵疲惫状态-更换支援精灵
+    def tired(self):
+        pass
 
     def damage(self, amount, attacker):
         """
@@ -665,6 +683,8 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
         #         self.enraged = True
         #         self.trigger("enraged")
         #         self._do_enrage()
+
+
 
     def change_attack(self, amount):
         """
@@ -1122,6 +1142,7 @@ class Minion(Character):
             def delayed_death(c):
                 self.remove_from_board()
                 self.unattach()
+                # deathrattle 亡语:死亡后召唤
                 if deathrattle is not None:
                     for rattle in deathrattle:
                         rattle.do(self)
@@ -1136,6 +1157,38 @@ class Minion(Character):
             self.bind_once("died", delayed_death)
             super().die(by)
             self.player.dead_this_turn.append(self)
+
+    #SDW rule
+    def tired(self, bynew):
+        # Since deathrattle gets removed by silence, save it
+        if self.dead or self.removed:
+            GameException('tired: minion tired error! is dead')
+
+        if not self.exhausted:
+            GameException('tired: minion tired error! not exhausted')
+
+        self.replace(bynew)
+        #TODO 使用后到哪里?
+        self.player.graveyard.append(self.card.name)
+
+        # def delayed_death(c):
+        #     self.remove_from_board()
+        #     self.unattach()
+        #     if deathrattle is not None:
+        #         for rattle in deathrattle:
+        #             rattle.do(self)
+        #
+        #             if self.player.double_deathrattle:
+        #                 rattle.do(self)
+        #     self.player.trigger("minion_died", self, by)
+        #     # Used to activate any secrets applied during the death phase
+        #     self.player.trigger("after_death", self.player)
+        #     self.player.graveyard.append(self.card.name)
+        #
+        # self.bind_once("died", delayed_death)
+        # super().die(by)
+        # self.player.dead_this_turn.append(self)
+
 
     def silence(self):
         super().silence()

@@ -541,7 +541,7 @@ class Player(Bindable):
         if self.can_draw():
             card = self.deck.draw(self.game)
             self.game.selected_card = card
-            if len(self.hand) < 10:
+            if len(self.hand) < 15:
                 self.hand.append(card)
                 card.attach(card, self)
                 self.trigger("card_drawn", card)

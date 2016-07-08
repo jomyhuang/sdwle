@@ -23,7 +23,7 @@ def abbreviate(card_name):
 def game_to_string(game):
     pass
 
-def console(y=0, x=0, info='dummy', color=0):
+def console(y=0, x=0, info='', color=0):
     print(info)
 
 
@@ -54,6 +54,12 @@ class ConsoleGameRender:
         self.targets = None
         self.selected_target = None
         self.selection_index = -1
+
+        self.lines = []
+
+    def console_printline(self):
+        for line in self.lines:
+            console(0,0,line)
 
     def draw_minion(self, minion, window, y, x, main=True):
         status_array = []
@@ -96,19 +102,24 @@ class ConsoleGameRender:
         if not main:
             spaces = ' ' * 30
 
-        name = abbreviate(minion.card.name)[:9]
+        name = abbreviate(minion.card.name)[:10]
         status = ''.join(status_array)
         power_line = "({0}) ({1})".format(minion.calculate_attack(), minion.health)
         facedown = ''
 
         if minion.card.is_facedown():
-            facedown = 'facedown'
-            #status = 'facedown'
+            status = name
+            name = 'facedown'
 
-        console(y, x, "{0}{1}:{2} {3:^9} {4:^9} {5:^9}".format(spaces, minion.index, facedown, name, power_line, status), color)
+        #console(y, x, "{0}{1}:{2} {3:^9} {4:^9} {5:^9}".format(spaces, minion.index, facedown, name, power_line, status), color)
         #console(y+1, x,"{0:^9}".format(power_line), color)
         #console(y+2, x, "{0:^9}".format(status), color)
-        # window.addstr(y + 2, x, "{0}".format(minion.index), color)
+        # window.addstr(y + 2, x, "{0}".format(minion.index), color
+
+        self.lines[0] += '[{0:^10}]'.format(name)
+        self.lines[1] += '[{0:^10}]'.format(power_line)
+        self.lines[2] += '[{0:^1} {1:^8}]'.format(minion.index, status[:8])
+
 
     def draw_card(self, card, player, index, window, y, x):
         color = 0
@@ -128,8 +139,13 @@ class ConsoleGameRender:
 
         name = card.name[:15]
 
-        console(y + 0, x, "{0}:{1:>2} mana ({2}) {3:^15}   ".format(index, card.mana_cost(), status, name), color)
+        #console(y + 0, x, "{0}:{1:>2} mana ({2}) {3:^15}   ".format(index, card.mana_cost(), status, name), color)
         # console(y + 1, x, "{0:^15}".format(name), color)
+
+        self.lines[0] += '+' + '-'*10 + '+'
+        self.lines[1] += '|{0:^10}|'.format(name[:10])
+        self.lines[2] += '|{0:^10}|'.format(status[:10])
+        self.lines[3] += '|{0:^10}|'.format(index)
 
     def draw_hero(self, player, window, x, y):
         # color = curses.color_pair(0)
@@ -161,6 +177,7 @@ class ConsoleGameRender:
         # self.card_window.clear()
 
         def draw_minions(minions, window, main):
+            self.lines = ['','','','']
             l_offset = int((80 - 10 * len(minions)) / 2)
             index = 0
             for minion in minions:
@@ -170,18 +187,37 @@ class ConsoleGameRender:
                 index += 1
             # if main and len(minions) == self.selection_index:
             #     window.addstr(2, l_offset + index * 10 - 1, "^")
+            self.console_printline()
 
         def draw_cards(cards, player, window, y):
+            self.lines = ['','','','']
             l_offset = int((80 - 16 * len(cards)) / 2)
             index = 0
             for card in cards:
                 self.draw_card(card, player, index, window, y, l_offset + index * 16)
                 index += 1
+                if not index % 5:
+                    self.console_printline()
+                    self.lines = ['','','','']
+
+            if index % 5:
+                self.console_printline()
+
+        top_player_info = ''.join('deck:{0} black-hole:{1}'.format(self.top_player.deck.left,
+                                                                   len(self.top_player.graveyard)))
+        console(0,0,top_player_info)
 
         draw_minions(self.top_player.minions, self.top_minion_window, False)
         draw_minions(self.bottom_player.minions, self.bottom_minion_window, True)
 
         draw_cards(self.bottom_player.hand, self.bottom_player, self.card_window, 0)
+
+        player_info = ''.join('turn:{0} deck:{1} black-hole:{2}'.format(self.game._turns_passed,
+                                                                        self.bottom_player.deck.left,
+                                                                        len(self.top_player.graveyard)))
+
+        console(0,0,player_info)
+
         # draw_cards(self.bottom_player.hand[:5], self.bottom_player, self.card_window, 0)
         # draw_cards(self.bottom_player.hand[5:], self.bottom_player, self.card_window, 3)
 
