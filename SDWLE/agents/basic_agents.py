@@ -36,6 +36,7 @@ class Agent(metaclass=abc.ABCMeta):
     def playinfo(self,text):
         pass
 
+    @abc.abstractmethod
     def choose_support_card(self, player):
         pass
 
@@ -98,6 +99,9 @@ class PredictableAgent(Agent):
     def choose_option(self, options, player):
         return self.filter_options(options, player)[0]
 
+    def choose_support_card(self, player):
+        return player.hand[0]
+
 
 class RandomAgent(DoNothingAgent):
     def __init__(self):
@@ -107,6 +111,9 @@ class RandomAgent(DoNothingAgent):
         return [True, True, True, True, True]
 
     def do_turn(self, player):
+        #TODO fix random agent
+        return
+
         while True:
             attack_minions = [minion for minion in filter(lambda minion: minion.can_attack(), player.minions)]
             if player.hero.can_attack():
@@ -136,3 +143,6 @@ class RandomAgent(DoNothingAgent):
     def choose_option(self, options, player):
         options = self.filter_options(options, player)
         return options[random.randint(0, len(options) - 1)]
+
+    def choose_support_card(self, player):
+        return player.hand[random.randint(0, len(player.hand) - 1)]

@@ -548,11 +548,13 @@ class Player(Bindable):
                 card.trigger("drawn")
             else:
                 self.trigger("card_destroyed", card)
+                raise GameException('draw: over 15 cards in hand')
         else:
             self.fatigue += 1
             self.hero.trigger("fatigue_damage", self.fatigue)
             self.hero.damage(self.fatigue, None)
             self.hero.activate_delayed()
+            raise GameException('draw: out of deck')
 
     def can_draw(self):
         return self.deck.can_draw()
