@@ -34,7 +34,7 @@ class Agent(metaclass=abc.ABCMeta):
 
     #SDW rule
     def playinfo(self,text):
-        pass
+        print( 'Agent:' + text)
 
     @abc.abstractmethod
     def choose_support_card(self, player):
@@ -48,8 +48,7 @@ class DoNothingAgent(Agent):
         return [True, True, True, True, True]
 
     def do_turn(self, player):
-        #SDW rule
-        print('DoNothingAgent I pass this turn')
+        self.playinfo('DoNothingAgent I pass this turn')
         pass
 
     def choose_target(self, targets):
@@ -65,30 +64,35 @@ class DoNothingAgent(Agent):
         return player.hand[0]
 
 
+
 class PredictableAgent(Agent):
     def do_card_check(self, cards):
         return [True, True, True, True, True]
 
     def do_turn(self, player):
-        done_something = True
+        # done_something = True
 
-        if player.hero.power.can_use():
-            player.hero.power.use()
+        attack_minions = [minion for minion in filter(lambda minion: minion.can_attack(), player.minions)]
+        attacker = attack_minions[0]
+        attacker.attack()
 
-        if player.hero.can_attack():
-            player.hero.attack()
-
-        while done_something:
-            done_something = False
-            for card in player.hand:
-                if card.can_use(player, player.game):
-                    player.game.play_card(card)
-                    done_something = True
-                    break
-
-        for minion in copy.copy(player.minions):
-            if minion.can_attack():
-                minion.attack()
+        # 能够使用的就使用 - 英雄、卡、进攻
+        # if player.hero.power.can_use():
+        #     player.hero.power.use()
+        #
+        # if player.hero.can_attack():
+        #     player.hero.attack()
+        # while done_something:
+        #     done_something = False
+        #     for card in player.hand:
+        #         if card.can_use(player, player.game):
+        #             player.game.play_card(card)
+        #             done_something = True
+        #             break
+        #
+        # for minion in copy.copy(player.minions):
+        #     if minion.can_attack():
+        #         minion.attack()
 
     def choose_target(self, targets):
         return targets[0]
@@ -111,28 +115,28 @@ class RandomAgent(DoNothingAgent):
         return [True, True, True, True, True]
 
     def do_turn(self, player):
-        #TODO fix random agent
-        return
+        attack_minions = [minion for minion in filter(lambda minion: minion.can_attack(), player.minions)]
+        # if player.hero.can_attack():
+        #     attack_minions.append(player.hero)
+        #playable_cards = [card for card in filter(lambda card: card.can_use(player, player.game), player.hand)]
+        # if player.hero.power.can_use():
+        #     possible_actions = len(attack_minions) + len(playable_cards) + 1
+        # else:
+        #     possible_actions = len(attack_minions) + len(playable_cards
+        attacker = attack_minions[random.randint(0, len(attack_minions)-1)]
 
-        while True:
-            attack_minions = [minion for minion in filter(lambda minion: minion.can_attack(), player.minions)]
-            if player.hero.can_attack():
-                attack_minions.append(player.hero)
-            playable_cards = [card for card in filter(lambda card: card.can_use(player, player.game), player.hand)]
-            if player.hero.power.can_use():
-                possible_actions = len(attack_minions) + len(playable_cards) + 1
-            else:
-                possible_actions = len(attack_minions) + len(playable_cards)
-            if possible_actions > 0:
-                action = random.randint(0, possible_actions - 1)
-                if player.hero.power.can_use() and action == possible_actions - 1:
-                    player.hero.power.use()
-                elif action < len(attack_minions):
-                    attack_minions[action].attack()
-                else:
-                    player.game.play_card(playable_cards[action - len(attack_minions)])
-            else:
-                return
+        self.playinfo('my turn! I play attacker %s' % attacker)
+
+        if attacker is not None:
+            # card = attacker.card
+            # if card.is_facedown():
+            #     card.use(card.player, player.game)
+            #     attacker = card.main_minion
+            # # SDW 发动进攻
+            attacker.attack()
+        else:
+            raise ValueError('Random Agent Attacker is None error')
+
 
     def choose_target(self, targets):
         return targets[random.randint(0, len(targets) - 1)]
@@ -146,3 +150,5 @@ class RandomAgent(DoNothingAgent):
 
     def choose_support_card(self, player):
         return player.hand[random.randint(0, len(player.hand) - 1)]
+
+

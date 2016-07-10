@@ -6,6 +6,8 @@ from SDWLE.constants import CHARACTER_CLASS
 from SDWLE.engine import Game, Deck, card_lookup
 from SDWLE.ui.game_console import ConsoleGameRender
 from SDWLE.cards import *
+from SDWLE.game_objects import GameException
+from SDWLE.agents.basic_agents import DoNothingAgent, RandomAgent
 
 
 def load_deck(filename):
@@ -60,8 +62,8 @@ def console_input_index(targets=[], prompt='>'):
     return selected
 
 
-def console_wait():
-    s = input('[]')
+def console_wait(prompt='[]'):
+    s = input(prompt)
     if s is 'q':
         sys.exit(0)
 
@@ -94,18 +96,18 @@ def render_game():
                 elif action == "attack":
                     #SDW rule
                     attacker = self.choose_attacker(player)
-                    if attacker is not None:
-                        #SDW rule
-                        card = attacker.card
-                        if card.is_facedown():
-                            #card._placeholder = attacker
-                            card.use(card.player, game)
-                            console(0, 0, 'face-up {0}'.format(card.name))
-                            #SDW rule add attribute
-                            attacker = card.main_minion
-                        #SDW 发动进攻
-                        attacker.attack()
-                        console_wait()
+                    # if attacker is not None:
+                    #     #SDW rule
+                    #     card = attacker.card
+                    #     if card.is_facedown():
+                    #         #card._placeholder = attacker
+                    #         card.use(card.player, game)
+                    #         console(0, 0, 'face-up {0}'.format(card.name))
+                    #         #SDW rule add attribute
+                    #         attacker = card.main_minion
+                    #     #SDW 发动进攻
+                    attacker.attack()
+                    console_wait('[battle end]')
 
                 elif action == "power":
                     if player.hero.power.can_use():
@@ -222,9 +224,7 @@ def render_game():
             #if player.hero.can_attack():
             #    filtered_attackers.append(player.hero)
             if len(filtered_attackers) is 0:
-                console(0,0,'没有精灵可以出战')
-                console_wait()
-                return None
+                raise GameException('choose_attacker: 没有精灵可以出战')
 
             renderer.targets = filtered_attackers
             console(0, 0, 'choose attacker [0-{0}]'.format(len(filtered_attackers)-1))
@@ -270,8 +270,8 @@ def render_game():
             # renderer.selection_index = -1
             # if ch == 27:
             #     return -1
-
-            return index
+            raise GameException('not implement')
+            return 0
 
         def choose_option(self, options, player):
             # self.window.addstr(0, 0, "Choose option")
@@ -328,8 +328,8 @@ def render_game():
             #     self.text_window.refresh()
             # if ch == 27:
             #     return None
-
-            return options[selected]
+            raise GameException('not implement')
+            return options[0]
 
     def choose_agent(window):
         agents = registry.get_names()
@@ -357,7 +357,7 @@ def render_game():
     deck2 = load_deck('example.hsdeck')
 
     #game = Game([deck1, deck2], [TextAgent(stdscr, prompt_window, text_window), agent])
-    game = Game([deck1, deck2], [ConsoleAgent(game_window, prompt_window, text_window), agent])
+    game = Game([deck1, deck2], [ConsoleAgent(game_window, prompt_window, text_window), RandomAgent()])
 
     if game.first_player == 0:
         renderer = ConsoleGameRender(stdscr, game, game.players[0])

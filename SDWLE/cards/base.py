@@ -302,15 +302,15 @@ class MinionCard(Card, metaclass=abc.ABCMeta):
         if card_attack:
             minion.add_buff(Buff(ChangeAttack(card_attack)))
         player.trigger("minion_placed", minion)
-        if self.choices:
-            choice = player.agent.choose_option(self.choices, player)
-            choice.do(minion)
-        if self.combo and player.cards_played > 0:
-            self.combo.do(minion)
-        else:
-            for battlecry in self.battlecry:
-                if not battlecry.do(minion, minion):
-                    break
+        # if self.choices:
+        #     choice = player.agent.choose_option(self.choices, player)
+        #     choice.do(minion)
+        # if self.combo and player.cards_played > 0:
+        #     self.combo.do(minion)
+        # else:
+        #     for battlecry in self.battlecry:
+        #         if not battlecry.do(minion, minion):
+        #             break
         game.check_delayed()
         # In case the minion has been replaced by its battlecry (e.g. Faceless Manipulator)
         minion = minion.replaced_by if minion.replaced_by else minion

@@ -203,8 +203,9 @@ class ConsoleGameRender:
             if index % 5:
                 self.console_printline()
 
-        top_player_info = ''.join('deck:{0} black-hole:{1}'.format(self.top_player.deck.left,
-                                                                   len(self.top_player.graveyard)))
+        top_player_info = ''.join('deck:{0} base:{1} black-hole:{2}'.format(self.top_player.deck.left,
+                                                                   len(self.top_player.graveyard),
+                                                                   len(self.top_player.graveyard_blackhole)))
         console(0,0,top_player_info)
 
         draw_minions(self.top_player.minions, self.top_minion_window, False)
@@ -212,9 +213,11 @@ class ConsoleGameRender:
 
         draw_cards(self.bottom_player.hand, self.bottom_player, self.card_window, 0)
 
-        player_info = ''.join('turn:{0} deck:{1} black-hole:{2}'.format(self.game._turns_passed,
+        player_info = ''.join('turn:{} player {} deck:{} base:{}, black-hole:{}'.format(self.game._turns_passed,
+                                                                        self.bottom_player.name,
                                                                         self.bottom_player.deck.left,
-                                                                        len(self.top_player.graveyard)))
+                                                                        len(self.bottom_player.graveyard),
+                                                                        len(self.bottom_player.graveyard_blackhole)))
 
         console(0,0,player_info)
 

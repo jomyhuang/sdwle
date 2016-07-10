@@ -72,7 +72,10 @@ class Game(Bindable):
         self._all_cards_played = []
         self._turns_passed = 0
         self.selected_card = None
+        #SDW rule
         Game.Session = self
+        self.winner = None
+
 
     def random_draw(self, cards, requirement):
         filtered_cards = [card for card in filter(requirement, cards)]
@@ -139,7 +142,6 @@ class Game(Bindable):
         #self.players[1].hand.append(coin)
 
         #SDW rule 部署5张起始牌
-        #TODO
         for card_index in range(5):
             card = self.players[0].deck.draw(self)
             card.attach(card, self.players[0])
@@ -149,16 +151,27 @@ class Game(Bindable):
             self.play_card_facedown(card)
 
     def start(self):
+        print('engine: SDW Game start, have fun!')
+        for player in self.players:
+            print('player %s %s' % (player.name, type(player.agent)))
+
         self.pre_game()
         self.current_player = self.players[1]
         while not self.game_ended:
             self.play_single_turn()
 
+        if self.winner:
+            print('engine: winner is player %s' % self.winner.name)
+        else:
+            print('engine: game is draw')
+
     def play_single_turn(self):
         self._start_turn()
-        print('start Turn:{0}'.format(self._turns_passed))
-        self.current_player.agent.do_turn(self.current_player)
+        print('engine---player %s start Turn:%d' % (self.current_player.name, self._turns_passed))
+        if not self.game_ended:
+            self.current_player.agent.do_turn(self.current_player)
         self._end_turn()
+        print('engine---end Turn')
 
     def _start_turn(self):
         if not self._has_turn_ended:  # when a game is copied, the turn isn't ended before the next one starts
@@ -172,15 +185,16 @@ class Game(Bindable):
             # self._turns_passed += 1
         #SDW rule 更换玩家就增加回合数
         self._turns_passed += 1
-        if self._turns_passed >= 50:
+        #SDW rule TODO 超过一定回合自动结束游戏?
+        if self._turns_passed >= 15:
             self.players[0].hero.dead = True
             self.players[1].hero.dead = True
             self.game_over()
+
         if self.current_player.max_mana < 10:
             self.current_player.max_mana += 1
-
-        for secret in self.other_player.secrets:
-            secret.activate(self.other_player)
+        # for secret in self.other_player.secrets:
+        #     secret.activate(self.other_player)
         for minion in self.current_player.minions:
             if minion:
                 minion.attacks_performed = 0
@@ -225,6 +239,19 @@ class Game(Bindable):
 
         self.check_delayed()
         self._has_turn_ended = True
+
+        # SDW rule 胜负判定与游戏结束
+        if self.players[0].minions.is_empty():
+            self.winner = self.players[1]
+            self.game_over()
+        if self.players[1].minions.is_empty():
+            self.winner = self.players[0]
+            self.game_over()
+
+        # SDW rule 游戏结束但是 winner=None 则为平手
+        if self.players[0].minions.is_empty() and self.players[1].minions.is_empty():
+            self.winner = None
+            self.game_over()
 
     def copy(self):
         copied_game = copy.copy(self)
@@ -461,6 +488,9 @@ class BattleField(list):
             raise GameException("battlefield can't insert")
         super().insert(index,p_object)
 
+    def is_empty(self):
+        return len(self) <= 0
+
 
 class Player(Bindable):
     def __init__(self, name, deck, agent, game):
@@ -469,20 +499,26 @@ class Player(Bindable):
         self.hero = deck.hero.create_hero(self)
         self.hero.card = deck.hero
         self.name = name
-        self.mana = 0
-        self.max_mana = 0
         self.deck = deck
-        self.spell_damage = 0
+        self.hand = []
+        self.agent = agent
+        self.opponent = None
+        self.cards_played = 0
         #SDW rule
         self.minions = BattleField()
-        #self.minions = [None,None,None,None,None]
-        #self.minions = []
+        # 回收基地区
         self.graveyard = []
-        self.hand = []
+        self.base_this_turn = []
+        # 黑洞区
+        self.graveyard_blackhole = []
+        self.dead_this_turn = []
+
+        self.spell_damage = 0
+        self.mana = 0
+        self.max_mana = 0
         self.object_auras = []
         self.player_auras = []
         self.fatigue = 0
-        self.agent = agent
         self.effects = []
         self.secrets = []
         self.weapon = None
@@ -493,9 +529,6 @@ class Player(Bindable):
         self.mana_filters = []
         self.upcoming_overload = 0
         self.current_overload = 0
-        self.opponent = None
-        self.cards_played = 0
-        self.dead_this_turn = []
 
     def __str__(self):  # pragma: no cover
         return "Player: " + self.name

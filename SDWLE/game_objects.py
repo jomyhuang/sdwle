@@ -415,6 +415,16 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
             self.buffs = [buff for buff in self.buffs if not isinstance(buff.status, Stealth)]
 
     def attack(self):
+        # SDW 发动进攻 proxy _hb_attack
+        attacker = self
+        card = attacker.card
+        if card.is_facedown():
+            card.use(self.player, self.player.game)
+            self.player.playinfo('attacker: card face-up {0}'.format(card.name))
+            attacker = card.main_minion
+        attacker._hb_attack()
+
+    def _hb_attack(self):
         """
         Causes this :class:`Character` to attack.
 
@@ -448,10 +458,17 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
         # else:
         #     targets.append(self.player.game.other_player.hero)
 
+        if not len(targets):
+            raise GameException('attacker targets is 0')
+
         target = self.choose_target(targets)
 
+        if target is None:
+            raise GameException('attacker choose target is None')
+
+
         # SDW rule
-        # TODO SDW special attack phase
+        # SDW 进攻阶段 attack phase
         target_card = target.card
         if target_card.is_facedown():
             # card._placeholder = target
@@ -461,16 +478,16 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
             target = target_card.main_minion
 
         support_card = self.choose_support_card(self.player)
-        self.player.playinfo('my support {0}'.format(support_card.name))
+        # self.player.playinfo('my support {0}'.format(support_card.name))
 
         self.player.game.play_support_card(support_card, self.card)
-        self.player.playinfo('support minions {0} {1}'.format(len(self.support_minions),self.support_minions[0].card.name))
+        self.player.playinfo('attacker support minions {0} {1}'.format(len(self.support_minions),self.support_minions[0].card.name))
 
         support_minion = self.support_minions[0]
 
         other_player = self.player.game.other_player
         target_support_card = other_player.choose_support_card(self.player.game.other_player)
-        self.player.playinfo('enemy support {0}'.format(target_support_card.name))
+        # self.player.playinfo('enemy support {0}'.format(target_support_card.name))
 
         other_player.game.play_support_card(target_support_card, target_card)
         # self.player.playinfo('enemy support minions {0} {1}'.format(len(card_enemy.main_minion.support_minions),card_enemy.main_minion.support_minions[0].card.name))
@@ -500,7 +517,7 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
         target_attack_power = target_attack + target_attack_support
         target.health = target_attack_power
 
-        self.player.playinfo('my attack {0} vs target {1}'.format(my_attack_power, target_attack_power))
+        self.player.playinfo('battle my attacker {0} vs enemy {1}'.format(my_attack_power, target_attack_power))
 
         #伤害处理
         target.sdw_damage(my_attack_power, self)
@@ -516,10 +533,10 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
 
         if target.health > 0:
             target.tired(target_support_minion)
-            self.player.playinfo('target perform tired new minion {0}'.format(target_support_minion.card.name))
+            self.player.playinfo('enemy perform tired new minion {0}'.format(target_support_minion.card.name))
 
 
-        #启动delay tigger/移除战斗死亡/学习机制 -》更换精灵
+        #启动delay tigger/移除战斗死亡 !!学习机制
         self.player.game.check_delayed()
         self.trigger("attack_completed")
         self.attacks_performed += 1
@@ -1137,22 +1154,31 @@ class Minion(Character):
     def die(self, by):
         # Since deathrattle gets removed by silence, save it
         if not self.dead and not self.removed:
-            deathrattle = self.deathrattle
+            deathrattle = None
+            # deathrattle = self.deathrattle
 
             def delayed_death(c):
                 self.remove_from_board()
                 self.unattach()
-                # deathrattle 亡语:死亡后召唤
-                if deathrattle is not None:
-                    for rattle in deathrattle:
-                        rattle.do(self)
-
-                        if self.player.double_deathrattle:
-                            rattle.do(self)
+                # # deathrattle 亡语:死亡后召唤
+                # if deathrattle is not None:
+                #     for rattle in deathrattle:
+                #         rattle.do(self)
+                #
+                #         if self.player.double_deathrattle:
+                #             rattle.do(self)
                 self.player.trigger("minion_died", self, by)
                 # Used to activate any secrets applied during the death phase
                 self.player.trigger("after_death", self.player)
-                self.player.graveyard.append(self.card.name)
+                #SDW rule 战斗失败进入黑洞
+                self.player.graveyard_blackhole.append(self.card.name)
+                print('player %s enter black hold %s' % (self.player.name, self.card.name) )
+
+                for support in self.support_minions:
+                    support.unattach()
+                    self.player.trigger("minion_died", support, by)
+                    self.player.graveyard_blackhole.append(support.card.name)
+                    print('player %s support enter black hold %s' % (self.player.name, support.card.name) )
 
             self.bind_once("died", delayed_death)
             super().die(by)
@@ -1169,7 +1195,10 @@ class Minion(Character):
 
         self.replace(bynew)
         #TODO 使用后到哪里?
+        self.unattach()
         self.player.graveyard.append(self.card.name)
+        self.player.base_this_turn.append(self)
+        print('player %s return base %s' % (self.player.name, self.card.name) )
 
         # def delayed_death(c):
         #     self.remove_from_board()
