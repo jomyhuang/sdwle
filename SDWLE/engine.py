@@ -50,14 +50,17 @@ class Game(Bindable):
 
     Session = None
 
-    def __init__(self, decks, agents):
+    def __init__(self, decks, agents, random_order=True):
         super().__init__()
         self.delayed_minions = set()
-        self.first_player = self._generate_random_between(0, 1)
-        if self.first_player is 0:
-            play_order = [0, 1]
+        if random_order:
+            self.first_player = self._generate_random_between(0, 1)
+            if self.first_player is 0:
+                play_order = [0, 1]
+            else:
+                play_order = [1, 0]
         else:
-            play_order = [1, 0]
+            play_order = [0, 1]
         self.players = [Player("one", decks[play_order[0]], agents[play_order[0]], self),
                         Player("two", decks[play_order[1]], agents[play_order[1]], self)]
         self.current_player = self.players[0]
@@ -154,7 +157,7 @@ class Game(Bindable):
     def start(self):
         print('engine: SDW Game start, have fun!')
         for player in self.players:
-            print('player %s %s' % (player.name, type(player.agent)))
+            print('player %s %s deck %s' % (player.name, type(player.agent), type(player.deck)))
 
         self.pre_game()
         self.current_player = self.players[1]

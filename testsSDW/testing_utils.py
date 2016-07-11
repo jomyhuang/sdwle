@@ -32,8 +32,8 @@ class StackedDeck(Deck):
                 return self.cards[card_index]
 
 
-class StackedDeck2(Deck):
-    def __init__(self, card_pattern, character_class=CHARACTER_CLASS.ALL, copy_range=5):
+class Stacked5Deck(Deck):
+    def __init__(self, card_pattern, character_class=CHARACTER_CLASS.ALL, copy_range=5 ):
         #以5张为单位复制顺序,分别为手牌x5、部署x5、继续抽卡x5xN
         cards = []
         index = 0
@@ -62,7 +62,10 @@ class StackedDeck2(Deck):
 
 
 
-def generate_game_for(card1, card2, first_agent_type, second_agent_type, run_pre_game=True):
+def generate_game_for(card1, card2, first_agent_type, second_agent_type,
+                      run_pre_game=True, random_order=False,
+                      deck_func1=Stacked5Deck, deck_func2=Stacked5Deck):
+
     if not isinstance(card1, collections.Sequence):
         card_set1 = [card1()]
     else:
@@ -85,10 +88,10 @@ def generate_game_for(card1, card2, first_agent_type, second_agent_type, run_pre
             break
 
     #SDW rule 新的测试用stackedDeck
-    deck1 = StackedDeck2(card_set1, class1)
-    deck2 = StackedDeck2(card_set2, class2)
+    deck1 = deck_func1(card_set1, class1)
+    deck2 = deck_func2(card_set2, class2)
 
-    game = Game([deck1, deck2], [first_agent_type(), second_agent_type()])
+    game = Game([deck1, deck2], [first_agent_type(), second_agent_type()], random_order=random_order)
     game.current_player = game.players[1]
     game.other_player = game.players[0]
     if run_pre_game:

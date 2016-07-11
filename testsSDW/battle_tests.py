@@ -17,73 +17,78 @@ class BattleTests(unittest.TestCase):
         random.seed()
 
     def test_AutoGame(self):
-        deck1 = Deck([
-            FrostwolfGrunt(),
-            FrostwolfGrunt(),
-            FrostwolfGrunt(),
-            FrostwolfGrunt(),
-            FrostwolfGrunt(),
-            FrostwolfGrunt(),
-            FrostwolfGrunt(),
-            FrostwolfGrunt(),
-            FrostwolfGrunt(),
-            FrostwolfGrunt(),
-            MurlocRaider(),
-            MurlocRaider(),
-            MurlocRaider(),
-            MurlocRaider(),
-            MurlocRaider(),
-            MurlocRaider(),
-            MurlocRaider(),
-            MurlocRaider(),
-            MurlocRaider(),
-            MurlocRaider(),
-            BloodfenRaptor(),
-            BloodfenRaptor(),
-            BloodfenRaptor(),
-            BloodfenRaptor(),
-            BloodfenRaptor(),
-            BloodfenRaptor(),
-            BloodfenRaptor(),
-            BloodfenRaptor(),
-            BloodfenRaptor(),
-            BloodfenRaptor()
-        ], Jaina())
+        # deck1 = Deck([
+        #     FrostwolfGrunt(),
+        #     FrostwolfGrunt(),
+        #     FrostwolfGrunt(),
+        #     FrostwolfGrunt(),
+        #     FrostwolfGrunt(),
+        #     FrostwolfGrunt(),
+        #     FrostwolfGrunt(),
+        #     FrostwolfGrunt(),
+        #     FrostwolfGrunt(),
+        #     FrostwolfGrunt(),
+        #     MurlocRaider(),
+        #     MurlocRaider(),
+        #     MurlocRaider(),
+        #     MurlocRaider(),
+        #     MurlocRaider(),
+        #     MurlocRaider(),
+        #     MurlocRaider(),
+        #     MurlocRaider(),
+        #     MurlocRaider(),
+        #     MurlocRaider(),
+        #     BloodfenRaptor(),
+        #     BloodfenRaptor(),
+        #     BloodfenRaptor(),
+        #     BloodfenRaptor(),
+        #     BloodfenRaptor(),
+        #     BloodfenRaptor(),
+        #     BloodfenRaptor(),
+        #     BloodfenRaptor(),
+        #     BloodfenRaptor(),
+        #     BloodfenRaptor()
+        # ], Jaina())
+        #
+        # deck2 = Deck([
+        #     Shieldbearer(),
+        #     Shieldbearer(),
+        #     Shieldbearer(),
+        #     Shieldbearer(),
+        #     Shieldbearer(),
+        #     Shieldbearer(),
+        #     Shieldbearer(),
+        #     Shieldbearer(),
+        #     Shieldbearer(),
+        #     Shieldbearer(),
+        #     MogushanWarden(),
+        #     MogushanWarden(),
+        #     MogushanWarden(),
+        #     MogushanWarden(),
+        #     MogushanWarden(),
+        #     MogushanWarden(),
+        #     MogushanWarden(),
+        #     MogushanWarden(),
+        #     MogushanWarden(),
+        #     MogushanWarden(),
+        #     WarGolem(),
+        #     WarGolem(),
+        #     WarGolem(),
+        #     WarGolem(),
+        #     WarGolem(),
+        #     WarGolem(),
+        #     WarGolem(),
+        #     WarGolem(),
+        #     WarGolem(),
+        #     WarGolem()
+        # ], Guldan())
 
-        deck2 = Deck([
-            Shieldbearer(),
-            Shieldbearer(),
-            Shieldbearer(),
-            Shieldbearer(),
-            Shieldbearer(),
-            Shieldbearer(),
-            Shieldbearer(),
-            Shieldbearer(),
-            Shieldbearer(),
-            Shieldbearer(),
-            MogushanWarden(),
-            MogushanWarden(),
-            MogushanWarden(),
-            MogushanWarden(),
-            MogushanWarden(),
-            MogushanWarden(),
-            MogushanWarden(),
-            MogushanWarden(),
-            MogushanWarden(),
-            MogushanWarden(),
-            WarGolem(),
-            WarGolem(),
-            WarGolem(),
-            WarGolem(),
-            WarGolem(),
-            WarGolem(),
-            WarGolem(),
-            WarGolem(),
-            WarGolem(),
-            WarGolem()
-        ], Guldan())
+        game = generate_game_for([FrostwolfGrunt, MurlocRaider, BloodfenRaptor],
+                                 [Shieldbearer, MogushanWarden, WarGolem],
+                                 RandomAgent, PredictableAgent, random_order=True,
+                                 deck_func1=StackedDeck)
 
-        game = Game([deck1, deck2], [RandomAgent(), PredictableAgent()])
+        # game = Game([deck1, deck2], [RandomAgent(), PredictableAgent()])
 
         print('test auto battle ------------')
         game.start()
@@ -94,10 +99,33 @@ class BattleTests(unittest.TestCase):
 
 
     def test_SingleBattle(self):
-        game = generate_game_for([Shieldbearer, StonetuskBoar, BloodfenRaptor],[MogushanWarden, WarGolem, FrostwolfGrunt], PredictableAgent, PredictableAgent)
+        game = generate_game_for([Shieldbearer, StonetuskBoar, BloodfenRaptor],
+                                 [MogushanWarden, WarGolem, FrostwolfGrunt],
+                                 PredictableAgent, PredictableAgent)
 
-        for turn in range(8):
-            game.play_single_turn()
+        # test hand, minions face-down
+        self.assertIsInstance(game.players[0].minions[0].card, StonetuskBoar)
+        self.assertTrue(game.players[0].minions[0].card.is_facedown())
+        self.assertIsInstance(game.players[0].hand[0], Shieldbearer)
+        self.assertIsInstance(game.players[1].minions[0].card, WarGolem)
+        self.assertTrue(game.players[1].minions[0].card.is_facedown())
+        self.assertIsInstance(game.players[1].hand[0], MogushanWarden)
 
-        # The mana should not go over 10 on turn 9 (or any other turn)
-        self.assertEqual(10, game.current_player.mana)
+        game.play_single_turn()
+
+        self.assertEqual(len(game.players[0].graveyard), 0)
+        self.assertEqual(len(game.players[0].graveyard_blackhole), 2)
+        self.assertEqual(len(game.players[1].graveyard), 1)
+        self.assertEqual(len(game.players[1].graveyard_blackhole), 0)
+        self.assertIsInstance(game.players[1].minions[0].card, MogushanWarden)
+        self.assertEqual(game.players[1].graveyard[0], WarGolem().name)
+
+        game.play_single_turn()
+
+        self.assertEqual(len(game.players[0].graveyard), 0)
+        self.assertEqual(len(game.players[0].graveyard_blackhole), 4)
+        self.assertEqual(len(game.players[1].graveyard), 2)
+        self.assertEqual(len(game.players[1].graveyard_blackhole), 0)
+        self.assertIsInstance(game.players[1].minions[0].card, MogushanWarden)
+        self.assertEqual(game.players[1].graveyard[1], MogushanWarden().name)
+
