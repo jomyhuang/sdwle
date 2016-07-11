@@ -15,7 +15,7 @@ __all__ = ["mock", "StackedDeck", "generate_game_for"]
 
 
 class StackedDeck(Deck):
-    def __init__(self, card_pattern, character_class):
+    def __init__(self, card_pattern, character_class=CHARACTER_CLASS.ALL):
         cards = []
         while len(cards) + len(card_pattern) < 30:
             cards.extend(copy.deepcopy(card_pattern))
@@ -30,6 +30,36 @@ class StackedDeck(Deck):
                 self.cards[card_index].drawn = True
                 self.left -= 1
                 return self.cards[card_index]
+
+
+class StackedDeck2(Deck):
+    def __init__(self, card_pattern, character_class=CHARACTER_CLASS.ALL, copy_range=5):
+        #以5张为单位复制顺序,分别为手牌x5、部署x5、继续抽卡x5xN
+        cards = []
+        index = 0
+        while len(cards) < 30:
+            copy_card = card_pattern[index]
+            for _ in range(copy_range):
+                cards.append(copy.deepcopy(copy_card))
+                if len(cards) >= 30:
+                    break
+            index += 1
+            if index >= len(card_pattern):
+                index = 0
+
+        # while len(cards) + len(card_pattern) < 30:
+        #     cards.extend(copy.deepcopy(card_pattern))
+        # cards.extend(card_pattern[:30 - len(cards)])
+        hero = hero_for_class(character_class)
+        super().__init__(cards, hero)
+
+    def draw(self, random_func):
+        for card_index in range(0, len(self.cards)):
+            if not self.cards[card_index].drawn:
+                self.cards[card_index].drawn = True
+                self.left -= 1
+                return self.cards[card_index]
+
 
 
 def generate_game_for(card1, card2, first_agent_type, second_agent_type, run_pre_game=True):
@@ -54,8 +84,10 @@ def generate_game_for(card1, card2, first_agent_type, second_agent_type, run_pre
             class2 = card.character_class
             break
 
-    deck1 = StackedDeck(card_set1, class1)
-    deck2 = StackedDeck(card_set2, class2)
+    #SDW rule 新的测试用stackedDeck
+    deck1 = StackedDeck2(card_set1, class1)
+    deck2 = StackedDeck2(card_set2, class2)
+
     game = Game([deck1, deck2], [first_agent_type(), second_agent_type()])
     game.current_player = game.players[1]
     game.other_player = game.players[0]

@@ -8,6 +8,7 @@ from SDWLE.cards import MogushanWarden, StonetuskBoar, GoldshireFootman, MurlocR
     AbusiveSergeant, NerubianEgg, KeeperOfTheGrove
 from SDWLE.cards.heroes import Jaina, Guldan, Malfurion
 from SDWLE.engine import Game, Deck
+from testsSDW.testing_utils import generate_game_for, StackedDeck, mock
 
 
 class BattleTests(unittest.TestCase):
@@ -15,7 +16,7 @@ class BattleTests(unittest.TestCase):
     def setUp(self):
         random.seed()
 
-    def test_AutoBattle(self):
+    def test_AutoGame(self):
         deck1 = Deck([
             FrostwolfGrunt(),
             FrostwolfGrunt(),
@@ -91,3 +92,12 @@ class BattleTests(unittest.TestCase):
 
         print('end test auto battle ---------')
 
+
+    def test_SingleBattle(self):
+        game = generate_game_for([Shieldbearer, StonetuskBoar, BloodfenRaptor],[MogushanWarden, WarGolem, FrostwolfGrunt], PredictableAgent, PredictableAgent)
+
+        for turn in range(8):
+            game.play_single_turn()
+
+        # The mana should not go over 10 on turn 9 (or any other turn)
+        self.assertEqual(10, game.current_player.mana)

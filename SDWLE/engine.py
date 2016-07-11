@@ -107,6 +107,7 @@ class Game(Bindable):
         p1_draw = [self.players[0].deck.draw(self) for i in range(5)]
         p2_draw = [self.players[1].deck.draw(self) for i in range(5)]
 
+        #调度手牌
         card_keep_index = self.players[0].agent.do_card_check(p1_draw)
         self.trigger("kept_cards", p1_draw, card_keep_index)
 
@@ -229,13 +230,13 @@ class Game(Bindable):
             minion.used_windfury = False
             minion.attacks_performed = 0
 
-        for aura in copy.copy(self.current_player.object_auras):
-            if aura.expires:
-                self.current_player.object_auras.remove(aura)
-                aura.unapply()
-
-        for secret in self.other_player.secrets:
-            secret.deactivate(self.other_player)
+        # for aura in copy.copy(self.current_player.object_auras):
+        #     if aura.expires:
+        #         self.current_player.object_auras.remove(aura)
+        #         aura.unapply()
+        #
+        # for secret in self.other_player.secrets:
+        #     secret.deactivate(self.other_player)
 
         self.check_delayed()
         self._has_turn_ended = True
