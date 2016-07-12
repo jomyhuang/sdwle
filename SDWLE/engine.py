@@ -507,6 +507,7 @@ class Player(Bindable):
         self.hand = []
         self.agent = agent
         self.opponent = None
+        #TODO check usages
         self.cards_played = 0
         #SDW rule
         self.minions = BattleField()

@@ -498,7 +498,7 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
 
         #TODO SDW damage calculate
         #TODO 处理无/or 多精灵支援
-        #TODO 标记进攻方、防守方标签
+        #TODO 标记进攻方、防守方、支援标签
         #TODO 处理战斗ATH克制
         self._remove_stealth()
         self.current_target = target
@@ -650,9 +650,9 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
             #     self.enraged = True
             #     self.trigger("enraged")
             #     self._do_enrage()
-        else:
-            pass
-            # 处理更换战斗精灵
+        # else:
+        #     pass
+        #     # 处理更换战斗精灵
 
     # SDW rule 主战斗精灵疲惫状态-更换支援精灵
     def tired(self):
@@ -672,7 +672,7 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
         :param int amount: The amount of damage done (should be positive)
         :param Object attacker: The :class:`Character`or :class:`SpellCard that did the damage or ``None``.
         """
-        raise GameException('damge function is cancel')
+        raise GameException('damage function is cancel')
         # if self.dead:
         #     return
         # self.player.trigger("pre_damage", self, attacker, amount)
@@ -1198,7 +1198,7 @@ class Minion(Character):
         self.unattach()
         self.player.graveyard.append(self.card.name)
         self.player.base_this_turn.append(self)
-        print('player %s return base %s' % (self.player.name, self.card.name) )
+        print('player %s return base %s' % (self.player.name, self.card.name))
 
         # def delayed_death(c):
         #     self.remove_from_board()
