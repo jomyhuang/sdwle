@@ -405,7 +405,14 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
         #: A list of actions that describe what will happen when this character is enraged
         self.enrage = enrage if enrage else []
         #: The character that this minion is attacking, while it is carrying out its attack
+        #SDW rule
+        # move from minion/hero
+        self.exhausted = True
         self.current_target = None
+        self.attacker = False
+        self.defender = False
+        self.supporter = False
+        self.combat_power = 0
 
     def _remove_stealth(self):
         if self.stealth:
@@ -413,6 +420,12 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
                 if isinstance(buff.status, Stealth):
                     buff.unapply()
             self.buffs = [buff for buff in self.buffs if not isinstance(buff.status, Stealth)]
+
+    def _remove_combat_tag(self):
+        self.attacker = False
+        self.defender = False
+        self.supporter = False
+        self.combat_power = 0
 
     def attack(self):
         # SDW 发动进攻 proxy _hb_attack
@@ -445,11 +458,11 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
         if self.facedown:
             raise GameException('attacker is facedown!')
 
-        found_taunt = False
+        # found_taunt = False
         targets = []
         for enemy in self.player.game.other_player.minions:
-            if enemy.taunt and enemy.can_be_attacked():
-                found_taunt = True
+            # if enemy.taunt and enemy.can_be_attacked():
+            #     found_taunt = True
             if enemy.can_be_attacked():
                 targets.append(enemy)
 
@@ -461,14 +474,12 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
         if not len(targets):
             raise GameException('attacker targets is 0')
 
+        # 选择进攻对象
         target = self.choose_target(targets)
 
         if target is None:
             raise GameException('attacker choose target is None')
 
-
-        # SDW rule
-        # SDW 进攻阶段 attack phase
         target_card = target.card
         if target_card.is_facedown():
             # card._placeholder = target
@@ -477,6 +488,21 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
             # SDW rule add attribute
             target = target_card.main_minion
 
+        # tagging combat tag
+        player = self.player
+        opponent_player = self.player.opponent
+
+        player._remove_combat_tag()
+        opponent_player._remove_combat_tag()
+        self._remove_combat_tag()
+        self.attacker = True
+        target._remove_combat_tag()
+        target.defender = True
+
+        # set player combat tag
+        player.combat_minion = self
+        opponent_player.combat_minion = target
+
         support_card = self.choose_support_card(self.player)
         # self.player.playinfo('my support {0}'.format(support_card.name))
 
@@ -484,6 +510,7 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
         self.player.playinfo('attacker support minions {0} {1}'.format(len(self.support_minions),self.support_minions[0].card.name))
 
         support_minion = self.support_minions[0]
+        support_minion.supporter = True
 
         other_player = self.player.game.other_player
         target_support_card = other_player.choose_support_card(self.player.game.other_player)
@@ -494,39 +521,55 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
         self.player.playinfo('enemy support minions {0} {1}'.format(len(target.support_minions),target.support_minions[0].card.name))
 
         target_support_minion = target.support_minions[0]
+        target_support_minion.supporter = True
+
+        # set player combat tag
+        player.support_minion = support_minion
+        opponent_player.support_minion = target_support_minion
 
 
-        #TODO SDW damage calculate
+        #进攻力计算/Combat power calaculate
         #TODO 处理无/or 多精灵支援
-        #TODO 标记进攻方、防守方、支援标签
+        #标记进攻方、防守方、支援标签
         #TODO 处理战斗ATH克制
         self._remove_stealth()
         self.current_target = target
         self.player.trigger("character_attack", self, self.current_target)
         self.trigger("attack", self.current_target)
         if self.removed or self.dead:  # removed won't be set yet if the Character died during this attack
-            return
+            raise GameException('error! target has be moved, combat interrput')
         my_attack = self.calculate_attack()  # In case the damage causes my attack to grow
         my_attack_support = support_minion.calculate_attack()
         my_attack_power = my_attack + my_attack_support
-        self.health = my_attack_power
+        self.combat_power = my_attack_power
+        self.health = self.combat_power
 
-        # target = self.current_target
         target_attack = target.calculate_attack()
         target_attack_support = target_support_minion.calculate_attack()
         target_attack_power = target_attack + target_attack_support
-        target.health = target_attack_power
+        target.combat_power = target_attack_power
+        target.health = target.combat_power
 
         self.player.playinfo('battle my attacker {0} vs enemy {1}'.format(my_attack_power, target_attack_power))
 
         #伤害处理
         target.sdw_damage(my_attack_power, self)
-        if target_attack > 0:
-            self.sdw_damage(target_attack_power, target)
+        self.sdw_damage(target_attack_power, target)
 
-        #TODO 标记胜负
+        #标记胜负
+        #TODO tigger 胜负tag
+        if my_attack_power > target_attack_power:
+            player.combat_win_times += 1
+            opponent_player.combat_lose_times += 1
+        elif my_attack_power < target_attack_power:
+            opponent_player.combat_win_times += 1
+            player.combat_lose_times += 1
+        else:
+            player.combat_draw_times += 1
+            opponent_player.combat_draw_times += 1
 
-        #更换精灵
+
+        #更换精灵/疲惫阶段
         if self.health > 0:
             self.tired(support_minion)
             self.player.playinfo('perform tired new minion {0}'.format(support_minion.card.name))
@@ -629,7 +672,10 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
         """
         if self.dead:
             return
+        pre_amount = amount
         self.player.trigger("pre_damage", self, attacker, amount)
+        if pre_amount != amount:
+            raise GameException('sdw_damage attack amount error!')
 
         if attacker and attacker.is_character() and self.health >= 0:
             self.health -= amount
@@ -980,7 +1026,7 @@ class Minion(Character):
                 self.deathrattle = deathrattle
         else:
             self.deathrattle = []
-        self.exhausted = True
+        self.exhausted = False
         self.removed = False
         if charge:
             self.buffs.append(Buff(Charge()))

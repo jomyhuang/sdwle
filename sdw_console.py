@@ -89,9 +89,10 @@ def render_game():
             action = self.choose_action()
             while not (action == "quit" or action == "end"):
                 if action == "play":
-                    card = self.choose_card(player)
-                    if card is not None:
-                        player.game.play_card(card)
+                    console(0,0,'play do not support yet')
+                    # card = self.choose_card(player)
+                    # if card is not None:
+                    #     player.game.play_card(card)
 
                 elif action == "attack":
                     #SDW rule
@@ -110,8 +111,9 @@ def render_game():
                     console_wait('[battle end]')
 
                 elif action == "power":
-                    if player.hero.power.can_use():
-                        player.hero.power.use()
+                    console(0,0,'power do not support yet')
+                    # if player.hero.power.can_use():
+                    #     player.hero.power.use()
 
                 index += 1
                 renderer.draw_game()
@@ -174,7 +176,8 @@ def render_game():
             renderer.targets = filtered_cards
 
             console(0, 0, 'choose card [0-{0}]'.format(len(filtered_cards)-1))
-            renderer.selected_target = console_input_index(renderer.targets[0])
+            # renderer.selected_target = console_input_index(renderer.targets[0])
+            renderer.selected_target = console_input_index(renderer.targets)
 
             # renderer.draw_game()
 

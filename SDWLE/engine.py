@@ -511,6 +511,11 @@ class Player(Bindable):
         self.cards_played = 0
         #SDW rule
         self.minions = BattleField()
+        self.combat_win_times = 0
+        self.combat_lose_times = 0
+        self.combat_draw_times = 0
+        self.combat_minion = None
+        self.support_minion = None
         # 回收基地区
         self.graveyard = []
         self.base_this_turn = []
@@ -518,6 +523,7 @@ class Player(Bindable):
         self.graveyard_blackhole = []
         self.dead_this_turn = []
 
+        #hearthbreaker attribute
         self.spell_damage = 0
         self.mana = 0
         self.max_mana = 0
@@ -537,6 +543,11 @@ class Player(Bindable):
 
     def __str__(self):  # pragma: no cover
         return "Player: " + self.name
+
+    #SDW rule
+    def _remove_combat_tag(self):
+        self.combat_minion = None
+        self.support_minion = None
 
     def copy(self, new_game):
         copied_player = Player(self.name, self.deck.copy(), self.agent, new_game)

@@ -120,6 +120,38 @@ class BattleTests(unittest.TestCase):
         self.assertIsInstance(game.players[1].minions[0].card, MogushanWarden)
         self.assertEqual(game.players[1].graveyard[0], WarGolem().name)
 
+        # test combat tag
+        minion = game.players[0].combat_minion
+        support = game.players[0].support_minion
+
+        self.assertIsInstance(minion.card, StonetuskBoar)
+        self.assertIsInstance(support.card, Shieldbearer)
+        self.assertEqual(minion.combat_power, 1 + 0)
+
+        self.assertTrue(minion.attacker)
+        self.assertFalse(minion.defender)
+        self.assertFalse(minion.supporter)
+
+        self.assertTrue(support.supporter)
+        self.assertFalse(support.attacker)
+        self.assertFalse(support.defender)
+
+        minion = game.players[1].combat_minion
+        support = game.players[1].support_minion
+
+        self.assertIsInstance(minion.card, WarGolem)
+        self.assertIsInstance(support.card, MogushanWarden)
+        self.assertEqual(minion.combat_power, 7 + 1)
+
+        self.assertFalse(minion.attacker)
+        self.assertTrue(minion.defender)
+        self.assertFalse(minion.supporter)
+
+        self.assertTrue(support.supporter)
+        self.assertFalse(support.attacker)
+        self.assertFalse(support.defender)
+
+
         game.play_single_turn()
 
         self.assertEqual(len(game.players[0].graveyard), 0)
@@ -128,4 +160,45 @@ class BattleTests(unittest.TestCase):
         self.assertEqual(len(game.players[1].graveyard_blackhole), 0)
         self.assertIsInstance(game.players[1].minions[0].card, MogushanWarden)
         self.assertEqual(game.players[1].graveyard[1], MogushanWarden().name)
+
+        # test combat tag 2
+        minion = game.players[0].combat_minion
+        support = game.players[0].support_minion
+
+        self.assertIsInstance(minion.card, StonetuskBoar)
+        self.assertIsInstance(support.card, Shieldbearer)
+        self.assertEqual(minion.combat_power, 1 + 0)
+
+        self.assertFalse(minion.attacker)
+        self.assertTrue(minion.defender)
+        self.assertFalse(minion.supporter)
+
+        self.assertTrue(support.supporter)
+        self.assertFalse(support.attacker)
+        self.assertFalse(support.defender)
+
+        minion = game.players[1].combat_minion
+        support = game.players[1].support_minion
+
+        self.assertIsInstance(minion.card, MogushanWarden)
+        self.assertIsInstance(support.card, MogushanWarden)
+        self.assertEqual(minion.combat_power, 1 + 1)
+
+        self.assertTrue(minion.attacker)
+        self.assertFalse(minion.defender)
+        self.assertFalse(minion.supporter)
+
+        self.assertTrue(support.supporter)
+        self.assertFalse(support.attacker)
+        self.assertFalse(support.defender)
+
+
+        self.assertEqual(game.players[0].combat_win_times, 0)
+        self.assertEqual(game.players[0].combat_lose_times, 2)
+        self.assertEqual(game.players[0].combat_draw_times, 0)
+
+        self.assertEqual(game.players[1].combat_win_times, 2)
+        self.assertEqual(game.players[1].combat_lose_times, 0)
+        self.assertEqual(game.players[1].combat_draw_times, 0)
+
 
