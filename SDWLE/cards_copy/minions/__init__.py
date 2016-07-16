@@ -1,10 +1,3 @@
-from SDWLE.cards.minions.sdw99 import (
-    SDW01,
-    SDW02,
-    SDW03,
-    SDW04,
-)
-
 from SDWLE.cards.minions.neutral import (
     BloodfenRaptor,
     IronbeakOwl,

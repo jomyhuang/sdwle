@@ -1,7 +1,7 @@
 import abc
 import copy
 from functools import reduce
-import SDWLE.constants
+from SDWLE.constants import TROOP_TYPE
 
 from SDWLE.tags.base import Aura, AuraUntil, Effect, Buff, BuffUntil, Deathrattle
 from SDWLE.tags.event import TurnEnded
@@ -120,6 +120,7 @@ class Bindable:
         :param list args: The arguments to pass to the bound function
         :see: :class:`Bindable`
         """
+        # print('trigger event ' + event)
         if event in self.events:
             for handler in copy.copy(self.events[event]):
                 if handler[1]:
@@ -359,7 +360,8 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
      This common superclass handles all of the status tags and calculations involved in attacking or being attacked.
     """
 
-    def __init__(self, attack_power, health, enrage=None, effects=None, auras=None, buffs=None):
+    def __init__(self, attack_power, attack_power_sp=0, enrage=None, effects=None, auras=None, buffs=None,
+                 health=0):
         """
         Create a new Character with the given attack power and health
 
@@ -370,12 +372,7 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
         """
         Bindable.__init__(self)
         GameObject.__init__(self, effects, auras, buffs)
-        # : The current health of this character
-        self.health = health
-        # : The maximum health of this character
-        self.base_health = health
-        #: The amount of attack this character has
-        self.base_attack = attack_power
+
         #: How many attacks this character has performed this turn
         self.attacks_performed = 0
         #: Whether or not this character has died
@@ -405,14 +402,28 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
         #: A list of actions that describe what will happen when this character is enraged
         self.enrage = enrage if enrage else []
         #: The character that this minion is attacking, while it is carrying out its attack
+
         #SDW rule
-        # move from minion/hero
+        self.attack_power = attack_power
+        self.attack_power_sp = attack_power_sp
+        if self.attack_power_sp is 0:
+            self.attack_power_sp = self.attack_power
+        #: The amount of attack this character has
+        self.base_attack = attack_power
+
+        # : The current health of this character
+        self.health = attack_power if health > 0 else health
+        # : The maximum health of this character
+        self.base_health = self.health
+        # move from minion/hero subclass
         self.exhausted = True
         self.current_target = None
+        # combat tag
         self.attacker = False
         self.defender = False
         self.supporter = False
         self.combat_power = 0
+
 
     def _remove_stealth(self):
         if self.stealth:
@@ -617,6 +628,7 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
         Calculates the amount of attack this :class:`Character` has, including the base attack, any temporary attack
         bonuses for this turn
         """
+
         return self.calculate_stat(ChangeAttack, self.base_attack)
 
     def calculate_max_health(self):
@@ -1005,11 +1017,11 @@ class Weapon(Bindable, GameObject):
 
 
 class Minion(Character):
-    def __init__(self, attack, health,
+    def __init__(self, attack, sp_attack,
                  deathrattle=None, taunt=False, charge=False, spell_damage=0, divine_shield=False, stealth=False,
                  windfury=False, spell_targetable=True, effects=None, auras=None, buffs=None,
-                 enrage=None, facedown=False):
-        super().__init__(attack, health, enrage, effects, auras, buffs)
+                 enrage=None, facedown=False, troop=TROOP_TYPE.NONE, health=0 ):
+        super().__init__(attack, sp_attack, enrage, effects, auras, buffs, health=health)
         self.game = None
         self.card = None
         self.index = -1
@@ -1018,6 +1030,8 @@ class Minion(Character):
         self.can_be_targeted_by_spells = True
         #SDW rule
         self.facedown = facedown
+        #troop is ATH
+        self.troop = troop
         self.support_minions = []
         if deathrattle:
             if isinstance(deathrattle, Deathrattle):
@@ -1112,7 +1126,33 @@ class Minion(Character):
         Calculates the amount of attack this :class:`Minion` has, including the base attack, any temporary attack
         bonuses for this turn and any aura tags
         """
-        return super().calculate_attack()
+        #SDW rule
+        #TODO 恢复计算效果buff能力
+        # power = super().calculate_attack()
+        power = self.base_attack
+
+        if self.player.combat_minion is None:
+            return power
+
+        troop = self.troop
+        active_sp = False
+        opponent_troop = self.player.opponent.combat_minion.troop
+        if troop in [TROOP_TYPE.A, TROOP_TYPE.T, TROOP_TYPE.H]:
+            print('calc ATH %s %s vs %s %s' % (self.card.name, TROOP_TYPE.to_str(troop),
+                                               self.player.opponent.combat_minion.card,
+                                               TROOP_TYPE.to_str(opponent_troop)))
+            if troop is TROOP_TYPE.A and opponent_troop is TROOP_TYPE.H:
+                active_sp = True
+            elif troop is TROOP_TYPE.H and opponent_troop is TROOP_TYPE.T:
+                active_sp = True
+            elif troop is TROOP_TYPE.T and opponent_troop is TROOP_TYPE.A:
+                active_sp = True
+
+        if active_sp:
+            power = self.attack_power_sp
+            print('%s %d power up %d' % (self.card.name, self.base_attack, power) )
+
+        return power
 
     def calculate_max_health(self):
         """
@@ -1287,7 +1327,8 @@ class Minion(Character):
         return True
 
     def __str__(self):  # pragma: no cover
-        return "({0}) ({1}) {2} at index {3}".format(self.calculate_attack(), self.health, self.card.name, self.index)
+        return "{0} ({1}) {3} index {2}".format(self.card.name, self.calculate_attack(), self.index,
+                                                'facedown' if self.facedown else '' )
 
     def copy(self, new_owner, new_game=None):
         new_minion = Minion(self.base_attack, self.base_health,
@@ -1371,6 +1412,7 @@ class Hero(Character):
         self.power.hero = self
         self.card = None
         self.power_targets_minions = False
+
 
     def calculate_attack(self):
         if self.player == self.player.game.current_player and self.player.weapon:

@@ -164,9 +164,7 @@ class Card(Bindable, GameObject):
         """
         Outputs a description of the card for debugging purposes.
         """
-        #SDW rule
-        # return self.name + " (" + str(self.mana) + " mana)"
-        return self.name
+        return self.name + " (" + str(self.mana) + " mana)"
 
     def replace(self, new_card):
         index = self.player.hand.index(self)
@@ -185,8 +183,7 @@ class MinionCard(Card, metaclass=abc.ABCMeta):
     :see: :meth:`create_minion`
     """
     def __init__(self, name, mana, character_class, rarity, collectible=True,
-                 minion_type=SDWLE.constants.MINION_TYPE.NONE,
-                 ref_name=None, battlecry=None, choices=None,
+                 minion_type=SDWLE.constants.MINION_TYPE.NONE, ref_name=None, battlecry=None, choices=None,
                  combo=None, overload=0, effects=None, buffs=None):
         """
         All parameters are passed directly to the :meth:`superclass's __init__ method <Card.__init__>`.

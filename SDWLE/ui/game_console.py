@@ -98,10 +98,6 @@ class ConsoleGameRender:
         #     elif minion in self.targets:
         #         color = curses.color_pair(3)
 
-        spaces = ''
-        if not main:
-            spaces = ' ' * 30
-
         name = abbreviate(minion.card.name)[:10]
         status = ''.join(status_array)
         power_line = "({0}) ({1})".format(minion.calculate_attack(), minion.health)
@@ -203,7 +199,8 @@ class ConsoleGameRender:
             if index % 5:
                 self.console_printline()
 
-        top_player_info = ''.join('deck:{0} base:{1} black-hole:{2}'.format(self.top_player.deck.left,
+        top_player_info = ''.join('deck:{0} hand:{1} base:{2} black-hole:{3}'.format(self.top_player.deck.left,
+                                                                len(self.top_player.hand),
                                                                    len(self.top_player.graveyard),
                                                                    len(self.top_player.graveyard_blackhole)))
         console(0,0,top_player_info)

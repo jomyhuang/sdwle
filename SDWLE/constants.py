@@ -95,3 +95,28 @@ class MINION_TYPE:
     def to_str(minion_number):
         types = dict(zip(MINION_TYPE.__types.values(), MINION_TYPE.__types.keys()))
         return types[minion_number].capitalize()
+
+
+class TROOP_TYPE:
+    ALL = -1
+    NONE = 0
+    A = 1
+    T = 2
+    H = 3
+
+    __types = {
+        "#": NONE,
+        "A": A,
+        "T": T,
+        "H": H,
+    }
+
+    @staticmethod
+    def from_str(type_name):
+
+        return TROOP_TYPE.__types[type_name.upper()]
+
+    @staticmethod
+    def to_str(troop_number):
+        types = dict(zip(TROOP_TYPE.__types.values(), TROOP_TYPE.__types.keys()))
+        return types[troop_number].capitalize()
