@@ -298,13 +298,16 @@ class Game(Bindable):
         #SDW rule
         card.facedown = True
 
-        facedown_minion = Minion(0, 0, facedown=True)
-        facedown_minion.card = card
-        facedown_minion.player = card.player
-        facedown_minion.game = self
-        #index = len(card.player.minions)
+        facedown_minion = card.create_minion_facedown(card.player)
+        facedown_minion.linkcard(card, card.player, self)
         facedown_minion.add_to_board()
-        card._placeholder = facedown_minion
+
+        # facedown_minion.card = card
+        # facedown_minion.player = card.player
+        # facedown_minion.game = self
+        #index = len(card.player.minions)
+        # #fix placeholder 需要?
+        # card._placeholder = facedown_minion
 
         #if card.is_minion():
         #if True:
@@ -352,7 +355,6 @@ class Game(Bindable):
 
         self.last_card = card
         # if card.is_minion():
-
             # card._placeholder = Minion(0, 0)
             # index = self.current_player.agent.choose_index(card, self.current_player)
             # for minion in self.current_player.minions[index:]:
@@ -377,6 +379,7 @@ class Game(Bindable):
 
 
     def play_card(self, card):
+        #TODO fix play_card function
         raise GameException('play_card not work yet!')
         if self.game_ended:
             raise GameException("The game has ended")

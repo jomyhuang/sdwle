@@ -9,6 +9,8 @@ from SDWLE.tags.selector import CurrentPlayer
 from SDWLE.tags.status import Stealth, ChangeAttack, ChangeHealth, SetAttack, Charge, Taunt, DivineShield, \
     Windfury, NoSpellTarget, SpellDamage, MinimumHealth, CanAttack
 import SDWLE.targeting
+#TODO BUG why can't import engine moudle?
+# ?from SDWLE.egine import Game
 
 
 class GameException(Exception):
@@ -120,7 +122,7 @@ class Bindable:
         :param list args: The arguments to pass to the bound function
         :see: :class:`Bindable`
         """
-        # print('trigger event ' + event)
+        # print('           trigger event ' + event)
         if event in self.events:
             for handler in copy.copy(self.events[event]):
                 if handler[1]:
@@ -183,6 +185,26 @@ class GameObject:
                 aura.set_owner(obj)
                 player.add_aura(aura)
             self._attached = True
+
+    def linkcard(self, card, player, game, index=0):
+        self.card = card
+        self.player = player
+        self.game = game
+        self.index = index
+
+        if not isinstance(self.card, SDWLE.cards.base.Card):
+            raise GameException('card instance error')
+        if not isinstance(self.player, SDWLE.engine.Player):
+            raise GameException('player instance error')
+        if not isinstance(self.game, SDWLE.engine.Game):
+            raise GameException('game instance error')
+
+        # copy minion informat to Card
+        card.main_minion = self
+        card.attack_power = self.attack_power
+        card.attack_power_sp = self.attack_power_sp
+        card.troop = self.troop
+
 
     def calculate_stat(self, stat_class, starting_value=0):
         """
@@ -446,6 +468,7 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
             card.use(self.player, self.player.game)
             self.player.playinfo('attacker: card face-up {0}'.format(card.name))
             attacker = card.main_minion
+
         attacker._hb_attack()
 
     def _hb_attack(self):
@@ -542,13 +565,14 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
         #进攻力计算/Combat power calaculate
         #TODO 处理无/or 多精灵支援
         #标记进攻方、防守方、支援标签
-        #TODO 处理战斗ATH克制
+        #处理战斗ATH克制
         self._remove_stealth()
         self.current_target = target
         self.player.trigger("character_attack", self, self.current_target)
         self.trigger("attack", self.current_target)
         if self.removed or self.dead:  # removed won't be set yet if the Character died during this attack
             raise GameException('error! target has be moved, combat interrput')
+
         my_attack = self.calculate_attack()  # In case the damage causes my attack to grow
         my_attack_support = support_minion.calculate_attack()
         my_attack_power = my_attack + my_attack_support
@@ -1017,11 +1041,11 @@ class Weapon(Bindable, GameObject):
 
 
 class Minion(Character):
-    def __init__(self, attack, sp_attack,
+    def __init__(self, attack_power, attack_power_sp,
                  deathrattle=None, taunt=False, charge=False, spell_damage=0, divine_shield=False, stealth=False,
                  windfury=False, spell_targetable=True, effects=None, auras=None, buffs=None,
-                 enrage=None, facedown=False, troop=TROOP_TYPE.NONE, health=0 ):
-        super().__init__(attack, sp_attack, enrage, effects, auras, buffs, health=health)
+                 enrage=None, facedown=False, troop=TROOP_TYPE.NONE, health=0):
+        super().__init__(attack_power, attack_power_sp, enrage, effects, auras, buffs, health=health)
         self.game = None
         self.card = None
         self.index = -1
@@ -1217,6 +1241,8 @@ class Minion(Character):
         self.replaced_by = new_minion
 
     def attack(self):
+        # if self.facedown:
+        #     raise GameException('attacker is facedown!')
         super().attack()
 
     def sdw_damage(self, amount, attacker):

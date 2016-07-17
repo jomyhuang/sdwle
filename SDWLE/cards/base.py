@@ -2,7 +2,7 @@ import abc
 from functools import reduce
 import SDWLE.constants
 from SDWLE.constants import CARD_RARITY, MINION_TYPE
-from SDWLE.game_objects import Bindable, GameObject, GameException, Hero
+from SDWLE.game_objects import Bindable, GameObject, GameException, Hero, Minion
 
 
 def _battlecry_targetable(target):
@@ -269,33 +269,48 @@ class MinionCard(Card, metaclass=abc.ABCMeta):
         super().use(player, game)
         if (len(player.minions) >= 7 and not self._placeholder) or len(player.minions) >= 8:
             raise GameException("Cannot place a minion on a board with more than 7 minons on it")
+        pre_minion = self.main_minion
         minion = self.create_minion(player)
-        minion.card = self
-        minion.player = player
-        minion.game = game
+        minion.linkcard(self, player, game)
+        # minion.card = self
+        # minion.player = player
+        # minion.game = game
         #SDW rule main minion纪录召唤的minion object
-        self.main_minion = minion
+        # self.main_minion = minion
         self.support = support
 
         #SDW rule
+        #face-up
         if not self.support:
             if self.is_facedown():
-                if self._placeholder:
-                    m = self._placeholder
+                if pre_minion:
                     self.facedown = False
-                    m.replace(minion)
-                    self._placeholder = None
+                    pre_minion.replace(minion)
                 else:
-                    raise GameException('card use no place holder')
+                    raise GameException('card facedown minion error')
+
+                # if self._placeholder:
+                #     m = self._placeholder
+                #     self.facedown = False
+                #     m.replace(minion)
+                #     self._placeholder = None
+                # else:
+                #     raise GameException('card use no place holder')
             else:
-                if self._placeholder:
-                    minion.index = self._placeholder.index
-                    player.minions.remove(self._placeholder)
+                if pre_minion:
+                    minion.index = pre_minion.index
+                    player.minions.remove(pre_minion)
                 else:
-                    #minion.index = player.agent.choose_index(self, player)
-                    raise GameException('card use no place holder')
-                minion.add_to_board(minion.index)
-                self._placeholder = None
+                    raise GameException('card use no place holder error')
+                minion.add_to_board()
+                # if self._placeholder:
+                #     minion.index = self._placeholder.index
+                #     player.minions.remove(self._placeholder)
+                # else:
+                #     #minion.index = player.agent.choose_index(self, player)
+                #     raise GameException('card use no place holder')
+                #minion.add_to_board(minion.index)
+                # self._placeholder = None
         else:
             #raise GameException('card use support')
             target_minion = target_card.main_minion
@@ -348,15 +363,21 @@ class MinionCard(Card, metaclass=abc.ABCMeta):
         if len(player.minions) < 7:
             self.attach(self, player)
             minion = self.create_minion(player)
-            minion.card = self
-            minion.player = player
-            minion.game = game
-            minion.index = index
+            #SDW rule new link minion with card
+            minion.linkcard(self, player, game, index)
+            # minion.card = self
+            # minion.player = player
+            # minion.game = game
+            # minion.index = index
             minion.add_to_board(index)
             player.trigger("minion_placed", minion)
             player.trigger("minion_summoned", minion)
             player.trigger("after_added", minion)
             return minion
+
+    def create_minion_facedown(self, player):
+        return Minion(0, 0, facedown=True)
+
 
     @abc.abstractmethod
     def create_minion(self, player):
