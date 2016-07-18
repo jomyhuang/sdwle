@@ -1,4 +1,5 @@
 import json
+import random
 from SDWLE.agents.basic_agents import RandomAgent
 from SDWLE.cards.heroes import hero_for_class
 from SDWLE.constants import CHARACTER_CLASS
@@ -71,6 +72,8 @@ def do_stuff():
 
         if _count % TEST_TIMES == 0:
             print("---- game #{} ----".format(_count))
+
+    random.seed()
 
     # deck1 = load_deck("test1.hsdeck")
     # deck2 = load_deck("test1.hsdeck")
