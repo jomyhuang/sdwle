@@ -101,7 +101,7 @@ class BattleTests(unittest.TestCase):
     def test_SingleBattle(self):
         game = generate_game_for([Shieldbearer, StonetuskBoar, BloodfenRaptor],
                                  [MogushanWarden, WarGolem, FrostwolfGrunt],
-                                 PredictableAgent, PredictableAgent)
+                                 PredictableAgent, PredictableAgent, random_order=False)
 
         # test hand, minions face-down
         self.assertIsInstance(game.players[0].minions[0].card, StonetuskBoar)
@@ -205,7 +205,7 @@ class BattleTests(unittest.TestCase):
     def test_BattleATH(self):
         game = generate_game_for([SDW01, SDW02, SDW03],
                                  [SDW03, SDW04, SDW02],
-                                 PredictableAgent, PredictableAgent)
+                                 PredictableAgent, PredictableAgent, random_order=False)
 
         # test hand, minions face-down
         self.assertIsInstance(game.players[0].minions[0].card, SDW02)
@@ -280,3 +280,6 @@ class BattleTests(unittest.TestCase):
         self.assertEqual(game.players[1].combat_draw_times, 0)
 
 
+    def test_winner_player_id(self):
+        # 测试游戏结束正确的游戏胜负信息 / 先后手 / player_id = Deck A/B
+        pass

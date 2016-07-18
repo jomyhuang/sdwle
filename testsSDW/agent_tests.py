@@ -13,7 +13,8 @@ from SDWLE.engine import Game, Deck
 class TestAgents(unittest.TestCase):
 
     def setUp(self):
-        random.seed(1857)
+        # random.seed(1857)
+        pass
 
     def test_RandomAgent(self):
         deck1 = Deck([

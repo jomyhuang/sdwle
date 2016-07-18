@@ -61,8 +61,15 @@ class Game(Bindable):
                 play_order = [1, 0]
         else:
             play_order = [0, 1]
-        self.players = [Player("one", decks[play_order[0]], agents[play_order[0]], self),
-                        Player("two", decks[play_order[1]], agents[play_order[1]], self)]
+        #SDW rule
+        #player name / 判定胜负的玩家标示 player_id
+        play_name = ["deck-A", "deck-B"]
+        self.players = [Player(play_name[play_order[0]]+'#one', decks[play_order[0]], agents[play_order[0]], self,
+                               player_id=play_order[0]),
+                        Player(play_name[play_order[1]]+'#two', decks[play_order[1]], agents[play_order[1]], self,
+                               player_id=play_order[1])]
+        # self.players = [Player("one", decks[play_order[0]], agents[play_order[0]], self),
+        #                 Player("two", decks[play_order[1]], agents[play_order[1]], self)]
         self.current_player = self.players[0]
         self.other_player = self.players[1]
         self.current_player.opponent = self.other_player
@@ -500,7 +507,7 @@ class BattleField(list):
 
 
 class Player(Bindable):
-    def __init__(self, name, deck, agent, game):
+    def __init__(self, name, deck, agent, game, player_id=None):
         super().__init__()
         self.game = game
         self.hero = deck.hero.create_hero(self)
@@ -513,6 +520,8 @@ class Player(Bindable):
         #TODO check usages
         self.cards_played = 0
         #SDW rule
+        #player_id 用于标示实际玩家标示
+        self.player_id = player_id
         self.minions = BattleField()
         self.combat_win_times = 0
         self.combat_lose_times = 0

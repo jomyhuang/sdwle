@@ -63,7 +63,7 @@ class Stacked5Deck(Deck):
 
 
 def generate_game_for(card1, card2, first_agent_type, second_agent_type,
-                      run_pre_game=True, random_order=False,
+                      run_pre_game=True, random_order=True,
                       deck_func1=Stacked5Deck, deck_func2=Stacked5Deck):
 
     if not isinstance(card1, collections.Sequence):
