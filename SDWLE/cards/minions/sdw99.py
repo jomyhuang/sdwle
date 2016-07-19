@@ -1,7 +1,7 @@
 from SDWLE.cards.base import MinionCard
 from SDWLE.cards.heroes import Ragnaros
 from SDWLE.game_objects import Minion
-from SDWLE.constants import CARD_RARITY, CHARACTER_CLASS, MINION_TYPE, TROOP_TYPE
+from SDWLE.constants import CARD_RARITY, CHARACTER_CLASS, MINION_TYPE, TROOP_TYPE, COLOR_TYPE, NATURE_TYPE
 
 # from SDWLE.tags.action import Heal, Summon, Draw, \
 #     Kill, Damage, ResurrectFriendly, Steal, Duplicate, Give, SwapWithHand, AddCard, Transform, ApplySecret, \
@@ -31,8 +31,9 @@ import copy
 class SDW01(MinionCard):
     def __init__(self):
         super().__init__("雷伊", 1, CHARACTER_CLASS.ALL, CARD_RARITY.FREE,
+                         color=COLOR_TYPE.YELLOW, star=9, nature=NATURE_TYPE.THUNDER,
+                         team='战神联盟', rank=None, ID='SDW01', boxset='01',
                          minion_type=MINION_TYPE.BEAST)
-
 
     def create_minion(self, player):
         return Minion(100, 150, troop=TROOP_TYPE.A)

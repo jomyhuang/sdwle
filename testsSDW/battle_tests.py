@@ -10,7 +10,8 @@ from SDWLE.cards.heroes import Jaina, Guldan, Malfurion
 from SDWLE.engine import Game, Deck
 from testsSDW.testing_utils import generate_game_for, StackedDeck, mock
 from SDWLE.cards import SDW01, SDW02, SDW03, SDW04
-from SDWLE.constants import CARD_RARITY, CHARACTER_CLASS, MINION_TYPE, TROOP_TYPE
+from SDWLE.constants import CARD_RARITY, CHARACTER_CLASS, MINION_TYPE, TROOP_TYPE, COLOR_TYPE, NATURE_TYPE
+# import SDWLE.constants
 
 
 
@@ -151,7 +152,6 @@ class BattleTests(unittest.TestCase):
         self.assertFalse(support.attacker)
         self.assertFalse(support.defender)
 
-
         game.play_single_turn()
 
         self.assertEqual(len(game.players[0].graveyard), 0)
@@ -200,6 +200,14 @@ class BattleTests(unittest.TestCase):
         self.assertEqual(game.players[1].combat_win_times, 2)
         self.assertEqual(game.players[1].combat_lose_times, 0)
         self.assertEqual(game.players[1].combat_draw_times, 0)
+
+    def test_card_attribute(self):
+        card = SDW01()
+
+        self.assertEqual(card.color, COLOR_TYPE.YELLOW)
+        self.assertEqual(card.nature, NATURE_TYPE.THUNDER)
+        self.assertEqual(card.star, 9)
+        self.assertEqual(card.ID,"SDW01")
 
 
     def test_BattleATH(self):
@@ -251,7 +259,6 @@ class BattleTests(unittest.TestCase):
 
         self.assertNotEqual(minion.combat_power, 280)
         self.assertEqual(minion.combat_power, 300)
-
 
         self.assertFalse(minion.attacker)
         self.assertTrue(minion.defender)

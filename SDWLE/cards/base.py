@@ -1,7 +1,7 @@
 import abc
 from functools import reduce
 import SDWLE.constants
-from SDWLE.constants import CARD_RARITY, MINION_TYPE
+from SDWLE.constants import CARD_RARITY, MINION_TYPE, COLOR_TYPE
 from SDWLE.game_objects import Bindable, GameObject, GameException, Hero, Minion
 
 
@@ -78,12 +78,6 @@ class Card(Bindable, GameObject):
         self.drawn = True
         self.current_target = None
         self.collectible = collectible
-        #SDW Rule
-        self.facedown = False
-
-    #SDW Rule
-    def is_facedown(self):
-        return self.facedown
 
 
     def can_choose(self, player):
@@ -186,8 +180,11 @@ class MinionCard(Card, metaclass=abc.ABCMeta):
     """
     def __init__(self, name, mana, character_class, rarity, collectible=True,
                  minion_type=SDWLE.constants.MINION_TYPE.NONE,
-                 ref_name=None, battlecry=None, choices=None,
-                 combo=None, overload=0, effects=None, buffs=None):
+                    color=COLOR_TYPE.NONE, star=0, nature=None,
+                    team=None, rank=None,
+                    ID=None, boxset=None,
+                    ref_name=None, battlecry=None, choices=None,
+                    combo=None, overload=0, effects=None, buffs=None):
         """
         All parameters are passed directly to the :meth:`superclass's __init__ method <Card.__init__>`.
 
@@ -226,10 +223,23 @@ class MinionCard(Card, metaclass=abc.ABCMeta):
         self.choices = choices
         self.combo = combo
         #SDW rule
+        #card attribute
+        self.color = color
+        self.star = star
+        self.nature = nature
+        self.team = team
+        self.rank = rank
+        self.ID = ID
+        self.boxset = boxset
+        #special tag
         self._placeholder = None
+        self.facedown = False
         self.main_minion = None
         self.support = False
 
+    # SDW Rule
+    def is_facedown(self):
+        return self.facedown
 
     def can_use(self, player, game):
         """

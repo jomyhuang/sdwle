@@ -120,3 +120,57 @@ class TROOP_TYPE:
     def to_str(troop_number):
         types = dict(zip(TROOP_TYPE.__types.values(), TROOP_TYPE.__types.keys()))
         return types[troop_number].capitalize()
+
+
+class COLOR_TYPE:
+    ALL = -1
+    NONE = 0
+    WHITE = 1
+    RED = 2
+    YELLOW = 3
+    GREEN = 4
+    BLUE = 5
+    BLACK = 6
+
+    __types = {
+        "无": NONE,
+        "白": WHITE,
+        "红": RED,
+        "黄": YELLOW,
+        '绿': GREEN,
+        '蓝': BLUE,
+        '黑': BLACK,
+    }
+
+    @staticmethod
+    def from_str(type_name):
+
+        return COLOR_TYPE.__types[type_name.upper()]
+
+    @staticmethod
+    def to_str(number):
+        types = dict(zip(COLOR_TYPE.__types.values(), COLOR_TYPE.__types.keys()))
+        return types[number].capitalize()
+
+
+class NATURE_TYPE:
+    ALL = -1
+    NONE = 0
+    THUNDER = 1
+    FIRE = 2
+
+    __types = {
+        "无": NONE,
+        "雷系": THUNDER,
+        "火系": FIRE,
+    }
+
+    @staticmethod
+    def from_str(type_name):
+
+        return NATURE_TYPE.__types[type_name.upper()]
+
+    @staticmethod
+    def to_str(number):
+        types = dict(zip(NATURE_TYPE.__types.values(), NATURE_TYPE.__types.keys()))
+        return types[number].capitalize()
