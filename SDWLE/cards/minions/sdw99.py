@@ -66,3 +66,26 @@ class SDW04(MinionCard):
         return Minion(150, 180, troop=TROOP_TYPE.A)
 
 
+class SDWBasicA(MinionCard):
+    def __init__(self):
+        super().__init__("Basic A", 1, CHARACTER_CLASS.ALL, CARD_RARITY.COMMON,
+                         minion_type=MINION_TYPE.BEAST)
+
+    def create_minion(self, player):
+        return Minion(100, 120, troop=TROOP_TYPE.A)
+
+class SDWBasicT(MinionCard):
+    def __init__(self):
+        super().__init__("Basic T", 1, CHARACTER_CLASS.ALL, CARD_RARITY.COMMON,
+                         minion_type=MINION_TYPE.BEAST)
+
+    def create_minion(self, player):
+        return Minion(100, 120, troop=TROOP_TYPE.T)
+
+class SDWBasicH(MinionCard):
+    def __init__(self):
+        super().__init__("Basic H", 1, CHARACTER_CLASS.ALL, CARD_RARITY.COMMON,
+                         minion_type=MINION_TYPE.BEAST)
+
+    def create_minion(self, player):
+        return Minion(100, 120, troop=TROOP_TYPE.H)

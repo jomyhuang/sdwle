@@ -29,7 +29,7 @@ def load_deck(filename):
 
     return Deck(cards, hero_for_class(character_class))
 
-TEST_TIMES = 1000
+TEST_TIMES = 10000
 
 def do_stuff():
     _count = 0
@@ -37,15 +37,21 @@ def do_stuff():
     game_B_win = 0
     game_draw =0
     game_error = 0
+    game_first_win = 0
+    game_second_win = 0
+    deck1_name = 'test1-A.hsdeck'
+    deck2_name = 'test1.hsdeck'
 
     def play_game():
         nonlocal _count
         nonlocal game_A_win, game_B_win, game_draw, game_error
+        nonlocal game_first_win, game_second_win
+        nonlocal deck1_name, deck2_name
         _count += 1
         #TODO copy game func bug!
         # new_game = game.copy()
-        deck1 = load_deck("test1.hsdeck")
-        deck2 = load_deck("test1.hsdeck")
+        deck1 = load_deck(deck1_name)
+        deck2 = load_deck(deck2_name)
         game = Game([deck1, deck2], [RandomAgent(), RandomAgent()])
 
         try:
@@ -63,6 +69,11 @@ def do_stuff():
                 game_A_win += 1
             elif player_id is 1:
                 game_B_win += 1
+
+            if game.winner is game.players[0]:
+                game_first_win += 1
+            else:
+                game_second_win += 1
         else:
             game_draw +=1
 
@@ -83,14 +94,16 @@ def do_stuff():
     print(timeit.timeit(play_game, 'gc.enable()', number=TEST_TIMES))
 
     #deck A/B 胜率
-
-    print('A win: %d' % game_A_win)
-    print('B win: %d' % game_B_win)
-    print('draw : %d' % game_draw)
-    print('error: %d' % game_error)
+    print('deckA: {} / deckB: {}'.format(deck1_name,deck2_name))
+    print('A win: {} ({:2.2%})'.format(game_A_win, (game_A_win / TEST_TIMES)))
+    print('B win: {} ({:2.2%})'.format(game_B_win, (game_B_win / TEST_TIMES)))
+    print('draw : {} ({:2.2%})'.format(game_draw, (game_draw / TEST_TIMES)))
+    print('error: {}'.format(game_error))
 
     # 计算先后手胜率
 
+    print('first hand win : {} ({:2.2%})'.format(game_first_win, (game_first_win / (TEST_TIMES-game_draw))))
+    print('second hand win: {} ({:2.2%})'.format(game_second_win, (game_second_win / (TEST_TIMES-game_draw))))
 
 if __name__ == "__main__":
     do_stuff()

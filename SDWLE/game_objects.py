@@ -1151,13 +1151,14 @@ class Minion(Character):
         bonuses for this turn and any aura tags
         """
         #SDW rule
-        #TODO 恢复计算效果buff能力
-        # power = super().calculate_attack()
-        power = self.base_attack
+        #恢复计算效果buff能力
+        power = super().calculate_attack()
+        # power = self.base_attack
 
         if self.player.combat_minion is None:
             return power
 
+        #TODO 将ATH克制变成buff?
         troop = self.troop
         active_sp = False
         opponent_troop = self.player.opponent.combat_minion.troop
@@ -1173,7 +1174,8 @@ class Minion(Character):
                 active_sp = True
 
         if active_sp:
-            power = self.attack_power_sp
+            #SDW rule 仅增加sp power up增加值
+            power += (self.attack_power_sp - self.base_attack)
             print('%s %d power up %d' % (self.card.name, self.base_attack, power) )
 
         return power
