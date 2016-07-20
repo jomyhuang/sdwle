@@ -90,3 +90,14 @@ class SDWBasicH(MinionCard):
 
     def create_minion(self, player):
         return Minion(100, 120, troop=TROOP_TYPE.H)
+
+class SDWBasic01(MinionCard):
+    def __init__(self):
+        super().__init__("SDWBasic01", 1, CHARACTER_CLASS.ALL, CARD_RARITY.FREE,
+                         color=COLOR_TYPE.YELLOW, star=7, nature=NATURE_TYPE.THUNDER,
+                         alliance='战神联盟', rank=None, ID='SDWBasic01', boxset='test',
+                         minion_type=MINION_TYPE.BEAST)
+
+    def create_minion(self, player):
+        return Minion(100, 120, troop=TROOP_TYPE.A,
+                      engage_attacker=200, engage_supporter=150, engage_defender=50)

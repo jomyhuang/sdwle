@@ -525,3 +525,42 @@ class Matches(Condition):
         self.selector = Selector.from_json(**selector)
         self.condition = Condition.from_json(**condition)
         return self
+
+
+#SDW rule
+class IsAttacker(Condition):
+    def __to_json__(self):
+        return {
+            'name': 'is_attacker'
+        }
+
+    def __init__(self):
+        super().__init__()
+
+    def evaluate(self, target, obj, *args):
+        return obj.is_minion() and obj.attacker
+
+class IsDefender(Condition):
+    def __to_json__(self):
+        return {
+            'name': 'is_defender'
+        }
+
+    def __init__(self):
+        super().__init__()
+
+    def evaluate(self, target, obj, *args):
+        return obj.is_minion() and obj.defender
+
+class IsSupporter(Condition):
+    def __to_json__(self):
+        return {
+            'name': 'is_supporter'
+        }
+
+    def __init__(self):
+        super().__init__()
+
+    def evaluate(self, target, obj, *args):
+        return obj.is_minion() and obj.supporter
+

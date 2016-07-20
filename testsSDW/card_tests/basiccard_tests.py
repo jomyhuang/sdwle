@@ -9,7 +9,7 @@ from SDWLE.agents.basic_agents import RandomAgent, PredictableAgent
 # from SDWLE.cards.heroes import Jaina, Guldan, Malfurion
 from SDWLE.engine import Game, Deck
 from testsSDW.testing_utils import generate_game_for, StackedDeck, Stacked5Deck
-from SDWLE.cards import SDW01, SDW02, SDW03, SDW04
+from SDWLE.cards import SDW01, SDW02, SDW03, SDW04, SDWBasicA, SDWBasicH, SDWBasicT, SDWBasic01
 from SDWLE.constants import CARD_RARITY, CHARACTER_CLASS, MINION_TYPE, TROOP_TYPE, COLOR_TYPE, NATURE_TYPE
 
 class BasicCardTest(unittest.TestCase):
@@ -85,9 +85,9 @@ class BasicCardTest(unittest.TestCase):
         deckA_support = SDW03
         deckA_draw = SDW03
         # mock card
-        deckB_attack = SDW01
-        deckB_support = SDW02
-        deckB_draw = SDW03
+        deckB_attack = SDWBasicA
+        deckB_support = SDWBasicA
+        deckB_draw = SDWBasicA
 
         game = self.singleCard_game_init( deckA_attack, deckA_support, deckA_draw,
                                           deckB_attack, deckB_support, deckB_draw )
@@ -100,3 +100,32 @@ class BasicCardTest(unittest.TestCase):
         game.play_single_turn()
         # self.singleCard_combat_test(2)
 
+    def test_effect_engage(self):
+
+        deckA_attack = SDWBasic01
+        deckA_support = SDWBasic01
+        deckA_draw = SDW03
+        # mock card
+        deckB_attack = SDWBasic01
+        deckB_support = SDWBasicA
+        deckB_draw = SDWBasicA
+
+        game = self.singleCard_game_init( deckA_attack, deckA_support, deckA_draw,
+                                          deckB_attack, deckB_support, deckB_draw )
+
+        game.play_single_turn()
+
+        #always deck A win
+        self.singleCard_combat_test(1)
+
+        attacker = game.players[0].combat_minion
+        defender = game.players[1].combat_minion
+
+        # self.assertEqual(attacker.calculate_attack(), 300)
+
+        self.assertEqual(attacker.combat_power, 550)
+        self.assertEqual(defender.combat_power, 250)
+
+
+        # game.play_single_turn()
+        # self.singleCard_combat_test(2)

@@ -7,8 +7,9 @@ from SDWLE.tags.base import Aura, AuraUntil, Effect, Buff, BuffUntil, Deathrattl
 from SDWLE.tags.event import TurnEnded
 from SDWLE.tags.selector import CurrentPlayer
 from SDWLE.tags.status import Stealth, ChangeAttack, ChangeHealth, SetAttack, Charge, Taunt, DivineShield, \
-    Windfury, NoSpellTarget, SpellDamage, MinimumHealth, CanAttack
+    Windfury, NoSpellTarget, SpellDamage, MinimumHealth, CanAttack, EngageAttack, EngageDefender, EngageSupporter
 import SDWLE.targeting
+from SDWLE.tags.condition import IsAttacker, IsDefender, IsSupporter
 #TODO BUG why can't import engine moudle?
 # ?from SDWLE.egine import Game
 
@@ -607,11 +608,11 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
         #更换精灵/疲惫阶段
         if self.health > 0:
             self.tired(support_minion)
-            self.player.playinfo('perform tired new minion {0}'.format(support_minion.card.name))
+            self.player.playinfo('更换疲惫精灵 {0}'.format(support_minion.card.name))
 
         if target.health > 0:
             target.tired(target_support_minion)
-            self.player.playinfo('enemy perform tired new minion {0}'.format(target_support_minion.card.name))
+            self.player.playinfo('对手更换疲惫精灵 {0}'.format(target_support_minion.card.name))
 
 
         #启动delay tigger/移除战斗死亡 !!学习机制
@@ -954,95 +955,10 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
             self.remove_aura(aura)
 
 
-class Weapon(Bindable, GameObject):
-    """
-    Represents a Hearthstone weapon.  All weapons have attack power and durability.  The logic for handling the
-    attacks is handled by :class:`Hero`, but it can be modified through the use of events.
-    """
-
-    def __init__(self, attack_power, durability, deathrattle=None,
-                 effects=None, auras=None, buffs=None):
-        """
-        Creates a new weapon with the given attack power and durability.  A battlecry and deathrattle can also
-        optionally be set.
-        :param int attack_power: The amount of attack this weapon gives the hero
-        :param int durability: The number of times this weapon can be used to attack before being discarded
-        :param function battlecry: Called when this weapon is equipped
-        :param function deathrattle: Called when the weapon is destroyed
-        """
-        Bindable.__init__(self)
-        GameObject.__init__(self, effects, auras, buffs)
-        # : The amount of attack this weapon gives the hero
-        self.base_attack = attack_power
-        # : The number of times this weapon can be used to attack before being discarded
-        self.durability = durability
-        #: Called when the weapon is destroyed
-        self.deathrattle = deathrattle
-        #: The :class:`Player` associated with this weapon
-        self.player = None
-        #: The :class:`WeaponCard` that created this weapon
-        self.card = None
-
-    def copy(self, new_owner):
-        new_weapon = Weapon(self.base_attack, self.durability, copy.deepcopy(self.deathrattle),
-                            copy.deepcopy(self.effects), copy.deepcopy(self.auras), copy.deepcopy(self.buffs))
-        new_weapon.player = new_owner
-        return new_weapon
-
-    def destroy(self):
-        self.trigger("destroyed")
-        # Deathrattle is triggered no matter how the weapon is destroyed, see
-        # http://www.hearthhead.com/card=1805/deaths-bite#comments:id=1983510
-        if self.deathrattle is not None:
-            self.deathrattle.do(self)
-        self.player.weapon = None
-        self.player.trigger("weapon_destroyed")
-        self.unattach()
-
-    def equip(self, player):
-        self.player = player
-        if self.player.weapon is not None:
-            self.player.weapon.destroy()
-        self.player.weapon = self
-        self.attach(self, player)
-        self.player.trigger("weapon_equipped")
-
-    def calculate_attack(self):
-        """
-        Calculates the amount of attack this :class:`Wea[on` has, including the base attack, any temporary attack
-        bonuses for this turn
-        """
-        return self.calculate_stat(ChangeAttack, self.base_attack)
-
-    def __to_json__(self):
-        parent_json = super().__to_json__()
-        parent_json.update({
-            'name': self.card.name,
-            'attack': self.base_attack,
-            'durability': self.durability,
-        })
-        return parent_json
-
-    @staticmethod
-    def is_weapon():
-        return True
-
-    @staticmethod
-    def __from_json__(wd, player):
-        from SDWLE.engine import card_lookup
-        weapon_card = card_lookup(wd['name'])
-        weapon = weapon_card.create_weapon(player)
-        weapon.base_attack = wd['attack']
-        weapon.durability = wd['durability']
-        weapon.card = weapon_card
-        GameObject.__from_json__(weapon, **wd)
-        return weapon
-
-
 
 class Minion(Character):
     def __init__(self, attack_power, attack_power_sp,
-                 engage=None,
+                 engage_attacker=None, engage_defender=None, engage_supporter=None,
                  deathrattle=None, taunt=False, charge=False, spell_damage=0, divine_shield=False, stealth=False,
                  windfury=False, spell_targetable=True, effects=None, auras=None, buffs=None,
                  enrage=None, facedown=False, troop=TROOP_TYPE.NONE, health=0):
@@ -1061,7 +977,15 @@ class Minion(Character):
         self.troop = troop
         self.support_minions = []
         #SDW effects tag
-        self.engage = engage
+        if engage_attacker is not None:
+            self.buffs.append(Buff(ChangeAttack(engage_attacker),IsAttacker()))
+            # self.buffs.append(Buff(EngageAttack(engage_attacker)))
+        if engage_defender is not None:
+            self.buffs.append(Buff(ChangeAttack(engage_defender),IsDefender()))
+            # self.buffs.append(Buff(EngageDefender(engage_defender)))
+        if engage_supporter is not None:
+            self.buffs.append(Buff(ChangeAttack(engage_supporter),IsSupporter()))
+            # self.buffs.append(Buff(EngageSupporter(engage_supporter)))
 
         #HB effects tag
         if deathrattle:
@@ -1555,3 +1479,88 @@ class Hero(Character):
         hero.used_windfury = hd["used_windfury"]
         hero.attacks_performed = not hd["attacks_performed"]
         return hero
+
+
+class Weapon(Bindable, GameObject):
+    """
+    Represents a Hearthstone weapon.  All weapons have attack power and durability.  The logic for handling the
+    attacks is handled by :class:`Hero`, but it can be modified through the use of events.
+    """
+
+    def __init__(self, attack_power, durability, deathrattle=None,
+                 effects=None, auras=None, buffs=None):
+        """
+        Creates a new weapon with the given attack power and durability.  A battlecry and deathrattle can also
+        optionally be set.
+        :param int attack_power: The amount of attack this weapon gives the hero
+        :param int durability: The number of times this weapon can be used to attack before being discarded
+        :param function battlecry: Called when this weapon is equipped
+        :param function deathrattle: Called when the weapon is destroyed
+        """
+        Bindable.__init__(self)
+        GameObject.__init__(self, effects, auras, buffs)
+        # : The amount of attack this weapon gives the hero
+        self.base_attack = attack_power
+        # : The number of times this weapon can be used to attack before being discarded
+        self.durability = durability
+        #: Called when the weapon is destroyed
+        self.deathrattle = deathrattle
+        #: The :class:`Player` associated with this weapon
+        self.player = None
+        #: The :class:`WeaponCard` that created this weapon
+        self.card = None
+
+    def copy(self, new_owner):
+        new_weapon = Weapon(self.base_attack, self.durability, copy.deepcopy(self.deathrattle),
+                            copy.deepcopy(self.effects), copy.deepcopy(self.auras), copy.deepcopy(self.buffs))
+        new_weapon.player = new_owner
+        return new_weapon
+
+    def destroy(self):
+        self.trigger("destroyed")
+        # Deathrattle is triggered no matter how the weapon is destroyed, see
+        # http://www.hearthhead.com/card=1805/deaths-bite#comments:id=1983510
+        if self.deathrattle is not None:
+            self.deathrattle.do(self)
+        self.player.weapon = None
+        self.player.trigger("weapon_destroyed")
+        self.unattach()
+
+    def equip(self, player):
+        self.player = player
+        if self.player.weapon is not None:
+            self.player.weapon.destroy()
+        self.player.weapon = self
+        self.attach(self, player)
+        self.player.trigger("weapon_equipped")
+
+    def calculate_attack(self):
+        """
+        Calculates the amount of attack this :class:`Wea[on` has, including the base attack, any temporary attack
+        bonuses for this turn
+        """
+        return self.calculate_stat(ChangeAttack, self.base_attack)
+
+    def __to_json__(self):
+        parent_json = super().__to_json__()
+        parent_json.update({
+            'name': self.card.name,
+            'attack': self.base_attack,
+            'durability': self.durability,
+        })
+        return parent_json
+
+    @staticmethod
+    def is_weapon():
+        return True
+
+    @staticmethod
+    def __from_json__(wd, player):
+        from SDWLE.engine import card_lookup
+        weapon_card = card_lookup(wd['name'])
+        weapon = weapon_card.create_weapon(player)
+        weapon.base_attack = wd['attack']
+        weapon.durability = wd['durability']
+        weapon.card = weapon_card
+        GameObject.__from_json__(weapon, **wd)
+        return weapon

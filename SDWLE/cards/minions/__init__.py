@@ -5,7 +5,8 @@ from SDWLE.cards.minions.sdw99 import (
     SDW04,
     SDWBasicA,
     SDWBasicT,
-    SDWBasicH
+    SDWBasicH,
+    SDWBasic01,
 )
 
 from SDWLE.cards.minions.neutral import (
