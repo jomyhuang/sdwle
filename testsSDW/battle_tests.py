@@ -1,24 +1,25 @@
 import random
 import unittest
 from SDWLE.agents.basic_agents import RandomAgent, PredictableAgent
-from SDWLE.cards import MogushanWarden, StonetuskBoar, GoldshireFootman, MurlocRaider, BloodfenRaptor, FrostwolfGrunt, RiverCrocolisk, \
-    IronfurGrizzly, MagmaRager, SilverbackPatriarch, ChillwindYeti, SenjinShieldmasta, BootyBayBodyguard, \
+from SDWLE.cards import MogushanWarden, StonetuskBoar, MurlocRaider, BloodfenRaptor, FrostwolfGrunt, \
+    GoldshireFootman, IronfurGrizzly, MagmaRager, SilverbackPatriarch, ChillwindYeti, SenjinShieldmasta, BootyBayBodyguard, \
     FenCreeper, BoulderfistOgre, WarGolem, Shieldbearer, FlameImp, YoungPriestess, DarkIronDwarf, DireWolfAlpha, \
     Voidwalker, HarvestGolem, KnifeJuggler, ShatteredSunCleric, ArgentSquire, Doomguard, Soulfire, DefenderOfArgus, \
-    AbusiveSergeant, NerubianEgg, KeeperOfTheGrove
+    AbusiveSergeant, NerubianEgg, KeeperOfTheGrove, RiverCrocolisk
 from SDWLE.cards.heroes import Jaina, Guldan, Malfurion
 from SDWLE.engine import Game, Deck
 from testsSDW.testing_utils import generate_game_for, StackedDeck, mock
 from SDWLE.cards import SDW01, SDW02, SDW03, SDW04
 from SDWLE.constants import CARD_RARITY, CHARACTER_CLASS, MINION_TYPE, TROOP_TYPE, COLOR_TYPE, NATURE_TYPE
-# import SDWLE.constants
-
 
 
 class BattleTests(unittest.TestCase):
 
     def setUp(self):
         random.seed()
+
+    def tearDown(self):
+        pass
 
     def test_AutoGame(self):
         # deck1 = Deck([

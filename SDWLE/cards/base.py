@@ -180,11 +180,11 @@ class MinionCard(Card, metaclass=abc.ABCMeta):
     """
     def __init__(self, name, mana, character_class, rarity, collectible=True,
                  minion_type=SDWLE.constants.MINION_TYPE.NONE,
-                    color=COLOR_TYPE.NONE, star=0, nature=None,
-                    team=None, rank=None,
-                    ID=None, boxset=None,
-                    ref_name=None, battlecry=None, choices=None,
-                    combo=None, overload=0, effects=None, buffs=None):
+                 color=COLOR_TYPE.NONE, star=0, nature=None,
+                 alliance=None, rank=None,
+                 ID=None, boxset=None,
+                 ref_name=None, battlecry=None, choices=None,
+                 combo=None, overload=0, effects=None, buffs=None):
         """
         All parameters are passed directly to the :meth:`superclass's __init__ method <Card.__init__>`.
 
@@ -227,7 +227,7 @@ class MinionCard(Card, metaclass=abc.ABCMeta):
         self.color = color
         self.star = star
         self.nature = nature
-        self.team = team
+        self.team = alliance
         self.rank = rank
         self.ID = ID
         self.boxset = boxset

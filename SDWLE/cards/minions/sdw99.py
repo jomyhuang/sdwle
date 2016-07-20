@@ -32,7 +32,7 @@ class SDW01(MinionCard):
     def __init__(self):
         super().__init__("雷伊", 1, CHARACTER_CLASS.ALL, CARD_RARITY.FREE,
                          color=COLOR_TYPE.YELLOW, star=9, nature=NATURE_TYPE.THUNDER,
-                         team='战神联盟', rank=None, ID='SDW01', boxset='01',
+                         alliance='战神联盟', rank=None, ID='SDW01', boxset='01',
                          minion_type=MINION_TYPE.BEAST)
 
     def create_minion(self, player):

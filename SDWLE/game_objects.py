@@ -1042,6 +1042,7 @@ class Weapon(Bindable, GameObject):
 
 class Minion(Character):
     def __init__(self, attack_power, attack_power_sp,
+                 engage=None,
                  deathrattle=None, taunt=False, charge=False, spell_damage=0, divine_shield=False, stealth=False,
                  windfury=False, spell_targetable=True, effects=None, auras=None, buffs=None,
                  enrage=None, facedown=False, troop=TROOP_TYPE.NONE, health=0):
@@ -1052,11 +1053,17 @@ class Minion(Character):
         self.taunt = 0
         self.replaced_by = None
         self.can_be_targeted_by_spells = True
+        self.exhausted = False
+        self.removed = False
         #SDW rule
         self.facedown = facedown
         #troop is ATH
         self.troop = troop
         self.support_minions = []
+        #SDW effects tag
+        self.engage = engage
+
+        #HB effects tag
         if deathrattle:
             if isinstance(deathrattle, Deathrattle):
                 self.deathrattle = [deathrattle]
@@ -1064,8 +1071,6 @@ class Minion(Character):
                 self.deathrattle = deathrattle
         else:
             self.deathrattle = []
-        self.exhausted = False
-        self.removed = False
         if charge:
             self.buffs.append(Buff(Charge()))
         if taunt:
