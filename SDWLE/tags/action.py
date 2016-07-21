@@ -1,9 +1,10 @@
 import copy
 
 from SDWLE.tags.base import Status, Action, Aura, Condition, AuraUntil, CardQuery, Effect, Buff, BuffUntil, \
-    Amount, Picker, Selector
+    Amount, Picker, Selector, ActionTag
 from SDWLE.tags.card_source import HandSource, SpecificCard
-from SDWLE.tags.selector import AllPicker, ConstantSelector, EnemyPlayer
+from SDWLE.tags.selector import AllPicker, ConstantSelector, EnemyPlayer, SelfSelector
+from SDWLE.tags.status import ChangeAttack
 
 
 class Give(Action):
@@ -853,3 +854,47 @@ class Joust(Action):
         else:
             self.lose_action = None
         return self
+
+
+
+#SDW rule
+
+class Engage(ActionTag):
+    def __init__(self, actions, selector, condition=None):
+        super().__init__(actions, selector, condition)
+        # check buff must is BuffUntil w/ turnEnd condition: TurnEnded(player=CurrentPlayer())
+        if isinstance(actions,Give):
+            for buff in actions.buffs:
+                if not isinstance(buff, BuffUntil):
+                    raise ValueError('engage buff must BuffUntil')
+
+
+class EngageAttack(Engage):
+    def __init__(self, actions, selector=SelfSelector(), condition=None):
+        super().__init__(actions, selector, condition)
+
+    def do(self, owner, target=None, other=None):
+        if not owner.attacker:
+            return False
+
+        return super().do(owner, target, other)
+
+class EngageDefender(Engage):
+    def __init__(self, actions, selector=SelfSelector(), condition=None):
+        super().__init__(actions, selector, condition)
+
+    def do(self, owner, target=None, other=None):
+        if not owner.defender:
+            return False
+
+        return super().do(owner, target, other)
+
+class EngageSupporter(Engage):
+    def __init__(self, actions, selector=SelfSelector(), condition=None):
+        super().__init__(actions, selector, condition)
+
+    def do(self, owner, target=None, other=None):
+        if not owner.supporter:
+            return False
+
+        return super().do(owner, target, other)

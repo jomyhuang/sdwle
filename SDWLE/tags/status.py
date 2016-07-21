@@ -105,75 +105,75 @@ class DoubleAttack(ChangeAttack):
             'name': 'double_attack',
         }
 
-#SDW rule engage 攻击时...
-class EngageAttack(ChangeAttack, metaclass=Amount):
-    def __init__(self):
-        #init superclass 带入值, 通过meta class带入amount参数 EngageAttack(100)
-        super().__init__(self.amount)
-
-    def act(self, actor, target):
-        pass
-
-    def unact(self, actor, target):
-        pass
-
-    def update(self, owner, prev_atk):
-        amount = 0
-        if owner.attacker:
-            amount = self.get_amount(owner, owner)
-            print('------!!effect engage attack %s %d ' % (owner.card.name, amount))
-        return prev_atk + amount
-
-    def __to_json__(self):
-        return {
-            'name': 'engage_attack',
-        }
-
-#SDW rule engage 防御时...
-class EngageDefender(ChangeAttack, metaclass=Amount):
-    def __init__(self):
-        super().__init__(self.amount)
-
-    def act(self, actor, target):
-        pass
-
-    def unact(self, actor, target):
-        pass
-
-    def update(self, owner, prev_atk):
-        amount = 0
-        if owner.defender:
-            amount = self.get_amount(owner, owner)
-            print('------!!effect engage defenders %s %d ' % (owner.card.name, amount))
-        return prev_atk + amount
-
-    def __to_json__(self):
-        return {
-            'name': 'engage_defender',
-        }
-
-#SDW rule engage 支援时...
-class EngageSupporter(ChangeAttack, metaclass=Amount):
-    def __init__(self):
-        super().__init__(self.amount)
-
-    def act(self, actor, target):
-        pass
-
-    def unact(self, actor, target):
-        pass
-
-    def update(self, owner, prev_atk):
-        amount = 0
-        if owner.supporter:
-            amount = self.get_amount(owner, owner)
-            print('------!!effect engage support %s %d ' % (owner.card.name, amount))
-        return prev_atk + amount
-
-    def __to_json__(self):
-        return {
-            'name': 'engage_supporter',
-        }
+# #SDW rule engage 攻击时...
+# class EngageAttack(ChangeAttack, metaclass=Amount):
+#     def __init__(self):
+#         #init superclass 带入值, 通过meta class带入amount参数 EngageAttack(100)
+#         super().__init__(self.amount)
+#
+#     def act(self, actor, target):
+#         pass
+#
+#     def unact(self, actor, target):
+#         pass
+#
+#     def update(self, owner, prev_atk):
+#         amount = 0
+#         if owner.attacker:
+#             amount = self.get_amount(owner, owner)
+#             print('------!!effect engage attack %s %d ' % (owner.card.name, amount))
+#         return prev_atk + amount
+#
+#     def __to_json__(self):
+#         return {
+#             'name': 'engage_attack',
+#         }
+#
+# #SDW rule engage 防御时...
+# class EngageDefender(ChangeAttack, metaclass=Amount):
+#     def __init__(self):
+#         super().__init__(self.amount)
+#
+#     def act(self, actor, target):
+#         pass
+#
+#     def unact(self, actor, target):
+#         pass
+#
+#     def update(self, owner, prev_atk):
+#         amount = 0
+#         if owner.defender:
+#             amount = self.get_amount(owner, owner)
+#             print('------!!effect engage defenders %s %d ' % (owner.card.name, amount))
+#         return prev_atk + amount
+#
+#     def __to_json__(self):
+#         return {
+#             'name': 'engage_defender',
+#         }
+#
+# #SDW rule engage 支援时...
+# class EngageSupporter(ChangeAttack, metaclass=Amount):
+#     def __init__(self):
+#         super().__init__(self.amount)
+#
+#     def act(self, actor, target):
+#         pass
+#
+#     def unact(self, actor, target):
+#         pass
+#
+#     def update(self, owner, prev_atk):
+#         amount = 0
+#         if owner.supporter:
+#             amount = self.get_amount(owner, owner)
+#             print('------!!effect engage support %s %d ' % (owner.card.name, amount))
+#         return prev_atk + amount
+#
+#     def __to_json__(self):
+#         return {
+#             'name': 'engage_supporter',
+#         }
 
 
 class ManaChange(Status, metaclass=Amount):

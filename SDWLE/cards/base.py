@@ -326,9 +326,10 @@ class MinionCard(Card, metaclass=abc.ABCMeta):
             target_minion = target_card.main_minion
             self.main_minion.add_to_support(target_minion)
 
-        card_attack = self.calculate_stat(ChangeAttack, 0)
-        if card_attack:
-            minion.add_buff(Buff(ChangeAttack(card_attack)))
+        # card_attack = self.calculate_stat(ChangeAttack, 0)
+        # if card_attack:
+        #     minion.add_buff(Buff(ChangeAttack(card_attack)))
+
         player.trigger("minion_placed", minion)
         # if self.choices:
         #     choice = player.agent.choose_option(self.choices, player)

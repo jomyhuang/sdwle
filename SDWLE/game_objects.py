@@ -7,10 +7,11 @@ from SDWLE.tags.base import Aura, AuraUntil, Effect, Buff, BuffUntil, Deathrattl
 from SDWLE.tags.event import TurnEnded
 from SDWLE.tags.selector import CurrentPlayer
 from SDWLE.tags.status import Stealth, ChangeAttack, ChangeHealth, SetAttack, Charge, Taunt, DivineShield, \
-    Windfury, NoSpellTarget, SpellDamage, MinimumHealth, CanAttack, EngageAttack, EngageDefender, EngageSupporter
+    Windfury, NoSpellTarget, SpellDamage, MinimumHealth, CanAttack
 import SDWLE.targeting
 from SDWLE.tags.condition import IsAttacker, IsDefender, IsSupporter
-#TODO BUG why can't import engine moudle?
+from SDWLE.tags.action import Give, EngageAttack, EngageDefender, EngageSupporter
+#TODO BUG why can't import engine moudle? (循环import)
 # ?from SDWLE.egine import Game
 
 
@@ -186,26 +187,6 @@ class GameObject:
                 aura.set_owner(obj)
                 player.add_aura(aura)
             self._attached = True
-
-    def linkcard(self, card, player, game, index=0):
-        self.card = card
-        self.player = player
-        self.game = game
-        self.index = index
-
-        if not isinstance(self.card, SDWLE.cards.base.Card):
-            raise GameException('card instance error')
-        if not isinstance(self.player, SDWLE.engine.Player):
-            raise GameException('player instance error')
-        if not isinstance(self.game, SDWLE.engine.Game):
-            raise GameException('game instance error')
-
-        # copy minion informat to Card
-        card.main_minion = self
-        card.attack_power = self.attack_power
-        card.attack_power_sp = self.attack_power_sp
-        card.troop = self.troop
-
 
     def calculate_stat(self, stat_class, starting_value=0):
         """
@@ -447,7 +428,6 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
         self.supporter = False
         self.combat_power = 0
 
-
     def _remove_stealth(self):
         if self.stealth:
             for buff in self.buffs:
@@ -460,6 +440,25 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
         self.defender = False
         self.supporter = False
         self.combat_power = 0
+
+    def linkcard(self, card, player, game, index=0):
+        self.card = card
+        self.player = player
+        self.game = game
+        self.index = index
+
+        if not isinstance(self.card, SDWLE.cards.base.Card):
+            raise GameException('card instance error')
+        if not isinstance(self.player, SDWLE.engine.Player):
+            raise GameException('player instance error')
+        if not isinstance(self.game, SDWLE.engine.Game):
+            raise GameException('game instance error')
+
+        # copy minion informat to Card
+        card.main_minion = self
+        card.attack_power = self.attack_power
+        card.attack_power_sp = self.attack_power_sp
+        card.troop = self.troop
 
     def attack(self):
         # SDW 发动进攻 proxy _hb_attack
@@ -574,7 +573,16 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
         if self.removed or self.dead:  # removed won't be set yet if the Character died during this attack
             raise GameException('error! target has be moved, combat interrput')
 
-        my_attack = self.calculate_attack()  # In case the damage causes my attack to grow
+        #SDW rule 处理 engage effect
+        #TODO 回合结束后如何处理engage
+        #TODO 解决如何重复增加Buff, 目前使用BuffUntil( ,turned )
+        self._do_engage()
+        support_minion._do_engage()
+        target._do_engage()
+        target_support_minion._do_engage()
+
+
+        my_attack = self.calculate_attack()
         my_attack_support = support_minion.calculate_attack()
         my_attack_power = my_attack + my_attack_support
         self.combat_power = my_attack_power
@@ -586,21 +594,26 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
         target.combat_power = target_attack_power
         target.health = target.combat_power
 
-        self.player.playinfo('battle my attacker {0} vs enemy {1}'.format(my_attack_power, target_attack_power))
+        self.player.playinfo('battle my attacker {0}+{1}={2} vs enemy {3}+{4}={5}'.format(
+                                        my_attack, my_attack_support, my_attack_power,
+                                        target_attack, target_attack_support, target_attack_power))
 
         #伤害处理
         target.sdw_damage(my_attack_power, self)
         self.sdw_damage(target_attack_power, target)
 
         #标记胜负
-        #TODO tigger 胜负tag
+        #TODO tigger 胜负event
         if my_attack_power > target_attack_power:
+            self.player.playinfo('{} 攻击方获胜'.format(self.player.name))
             player.combat_win_times += 1
             opponent_player.combat_lose_times += 1
         elif my_attack_power < target_attack_power:
+            self.player.playinfo('{} 防守方获胜'.format(opponent_player.name))
             opponent_player.combat_win_times += 1
             player.combat_lose_times += 1
         else:
+            self.player.playinfo('双方平手,两败俱伤')
             player.combat_draw_times += 1
             opponent_player.combat_draw_times += 1
 
@@ -608,11 +621,11 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
         #更换精灵/疲惫阶段
         if self.health > 0:
             self.tired(support_minion)
-            self.player.playinfo('更换疲惫精灵 {0}'.format(support_minion.card.name))
+            # self.player.playinfo('{} 更换支援精灵上场 {}'.format(support_minion.card.name))
 
         if target.health > 0:
             target.tired(target_support_minion)
-            self.player.playinfo('对手更换疲惫精灵 {0}'.format(target_support_minion.card.name))
+            # self.player.playinfo('{} 对手更换支援精灵 {}'.format(target_support_minion.card.name))
 
 
         #启动delay tigger/移除战斗死亡 !!学习机制
@@ -958,6 +971,7 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
 
 class Minion(Character):
     def __init__(self, attack_power, attack_power_sp,
+                 engage=None,
                  engage_attacker=None, engage_defender=None, engage_supporter=None,
                  deathrattle=None, taunt=False, charge=False, spell_damage=0, divine_shield=False, stealth=False,
                  windfury=False, spell_targetable=True, effects=None, auras=None, buffs=None,
@@ -976,15 +990,30 @@ class Minion(Character):
         #troop is ATH
         self.troop = troop
         self.support_minions = []
+
         #SDW effects tag
-        if engage_attacker is not None:
-            self.buffs.append(Buff(ChangeAttack(engage_attacker),IsAttacker()))
+        if engage:
+            if isinstance(engage, tuple):
+                #TODO 处理engage是个元组
+                self.engage = engage
+            elif isinstance(engage, list):
+                self.engage = engage
+            else:
+                self.engage = [engage,]
+        else:
+            self.engage = []
+
+        if engage_attacker:
+            self.engage.append(EngageAttack(Give(BuffUntil(ChangeAttack(engage_attacker),TurnEnded(player=CurrentPlayer())))))
+            # self.buffs.append(Buff(ChangeAttack(engage_attacker),IsAttacker()))
             # self.buffs.append(Buff(EngageAttack(engage_attacker)))
-        if engage_defender is not None:
-            self.buffs.append(Buff(ChangeAttack(engage_defender),IsDefender()))
+        if engage_defender:
+            self.engage.append(EngageDefender(Give(BuffUntil(ChangeAttack(engage_defender),TurnEnded(player=CurrentPlayer())))))
+            # self.buffs.append(Buff(ChangeAttack(engage_defender),IsDefender()))
             # self.buffs.append(Buff(EngageDefender(engage_defender)))
-        if engage_supporter is not None:
-            self.buffs.append(Buff(ChangeAttack(engage_supporter),IsSupporter()))
+        if engage_supporter:
+            self.engage.append(EngageSupporter(Give(BuffUntil(ChangeAttack(engage_supporter),TurnEnded(player=CurrentPlayer())))))
+            # self.buffs.append(Buff(ChangeAttack(engage_supporter),IsSupporter()))
             # self.buffs.append(Buff(EngageSupporter(engage_supporter)))
 
         #HB effects tag
@@ -1073,6 +1102,12 @@ class Minion(Character):
                             aura.status.unact(aura.owner, minion)
         self.trigger("added_to_support_minion", self, main)
 
+    def _do_engage(self):
+
+        for engage in self.engage:
+            engage.do(self, self)
+             # if not engage.do(self, self):
+             #     break
 
     def calculate_attack(self):
         """
@@ -1215,13 +1250,13 @@ class Minion(Character):
                 self.player.trigger("after_death", self.player)
                 #SDW rule 战斗失败进入黑洞
                 self.player.graveyard_blackhole.append(self.card.name)
-                print('player %s enter black hold %s' % (self.player.name, self.card.name) )
+                self.player.playinfo('%s 主战进入黑洞 %s' % (self.player.name, self.card.name) )
 
                 for support in self.support_minions:
                     support.unattach()
                     self.player.trigger("minion_died", support, by)
                     self.player.graveyard_blackhole.append(support.card.name)
-                    print('player %s support enter black hold %s' % (self.player.name, support.card.name) )
+                    self.player.playinfo('%s 支援进入黑洞 %s' % (self.player.name, support.card.name) )
 
             self.bind_once("died", delayed_death)
             super().die(by)
@@ -1231,17 +1266,21 @@ class Minion(Character):
     def tired(self, bynew):
         # Since deathrattle gets removed by silence, save it
         if self.dead or self.removed:
-            GameException('tired: minion tired error! is dead')
+            raise GameException('tired: minion tired error! is dead')
 
         if not self.exhausted:
-            GameException('tired: minion tired error! not exhausted')
+            raise GameException('tired: minion tired error! not exhausted')
+
+        if self.health <= 0:
+            raise GameException('tired: minion tired error! health is 0')
 
         self.replace(bynew)
-        #TODO 使用后到哪里?
+        self.player.playinfo('%s 更换支援精灵上场 %s' % (self.player.name, bynew.card.name))
+
         self.unattach()
         self.player.graveyard.append(self.card.name)
         self.player.base_this_turn.append(self)
-        print('player %s return base %s' % (self.player.name, self.card.name))
+        self.player.playinfo('%s 精灵回基地 %s' % (self.player.name, self.card.name))
 
         # def delayed_death(c):
         #     self.remove_from_board()

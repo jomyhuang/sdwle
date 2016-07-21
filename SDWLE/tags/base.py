@@ -3,7 +3,6 @@ import copy
 import json
 import string
 
-
 class JSONObject(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
@@ -616,7 +615,6 @@ class Battlecry(ActionTag):
     def __init__(self, actions, selector, condition=None):
         super().__init__(actions, selector, condition)
 
-
 class Choice(ActionTag):
     def __init__(self, card, actions, selector, condition=None):
         self.card = card
@@ -705,3 +703,5 @@ class Context(metaclass=abc.ABCMeta):
         :param target: The character getting damaged
         """
         pass
+
+
