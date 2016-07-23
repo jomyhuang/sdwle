@@ -7,9 +7,9 @@ from SDWLE.tags.action import Heal, Summon, Draw, \
     Kill, Damage, ResurrectFriendly, Steal, Duplicate, Give, SwapWithHand, AddCard, Transform, ApplySecret, \
     Silence, Bounce, GiveManaCrystal, Equip, GiveAura, Replace, SetHealth, ChangeTarget, Discard, \
     RemoveDivineShields, DecreaseDurability, IncreaseDurability, IncreaseWeaponAttack, Destroy, GiveEffect, SwapStats, \
-    Joust, RemoveFromDeck, RemoveSecret, \
-    EngageAttack, EngageDefender, EngageSupporter
-from SDWLE.tags.base import Effect, Deathrattle, Battlecry, Aura, BuffUntil, Buff, AuraUntil, ActionTag
+    Joust, RemoveFromDeck, RemoveSecret
+from SDWLE.tags.base import Effect, Deathrattle, Battlecry, Aura, BuffUntil, Buff, AuraUntil, ActionTag, \
+    EngageAttack, EngageDefender, EngageSupporter, BuffUntilTurnEnded
 from SDWLE.tags.card_source import CardList, LastCard, DeckSource, Same, CollectionSource
 from SDWLE.tags.condition import Adjacent, IsType, MinionHasDeathrattle, IsMinion, IsSecret, \
     MinionIsTarget, IsSpell, IsDamaged, InGraveyard, ManaCost, OpponentMinionCountIsGreaterThan, AttackGreaterThan, \
@@ -94,12 +94,29 @@ class SDWBasicH(MinionCard):
 
 class SDWBasic01(MinionCard):
     def __init__(self):
-        super().__init__("SDWBasic01", 1, CHARACTER_CLASS.ALL, CARD_RARITY.FREE,
+        super().__init__("SDWBasic01-engage", 1, CHARACTER_CLASS.ALL, CARD_RARITY.FREE,
                          color=COLOR_TYPE.YELLOW, star=7, nature=NATURE_TYPE.THUNDER,
                          alliance='战神联盟', rank=None, ID='SDWBasic01', boxset='test',
                          minion_type=MINION_TYPE.BEAST)
 
     def create_minion(self, player):
         return Minion(100, 120, troop=TROOP_TYPE.A,
-                      # engage=EngageAttack(Give(BuffUntil(ChangeAttack(300),TurnEnded(player=CurrentPlayer())))),
+                      engage=(EngageAttack(Give(BuffUntilTurnEnded(ChangeAttack(1000)))),
+                      # engage=(EngageAttack(Give(Buff(ChangeAttack(1000)))),
+                              EngageAttack(Draw(3),PlayerSelector())),
                       engage_attacker=200, engage_supporter=150, engage_defender=50)
+
+
+class SDWBasic02(MinionCard):
+    def __init__(self):
+        super().__init__("SDWBasic02-battrycry", 1, CHARACTER_CLASS.ALL, CARD_RARITY.FREE,
+                        color=COLOR_TYPE.YELLOW, star=7, nature=NATURE_TYPE.THUNDER,
+                         alliance='战神联盟', rank=None, ID='SDWBasic02', boxset='test',
+                         minion_type=MINION_TYPE.BEAST,
+                         battlecry=(Battlecry(Give(Buff(ChangeAttack(200))), SelfSelector()),
+                                    Battlecry(Draw(4), PlayerSelector())
+                                    )
+                         )
+
+    def create_minion(self, player):
+        return Minion(100, 120, troop=TROOP_TYPE.A)

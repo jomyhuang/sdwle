@@ -3,16 +3,17 @@ import copy
 from functools import reduce
 from SDWLE.constants import TROOP_TYPE
 
-from SDWLE.tags.base import Aura, AuraUntil, Effect, Buff, BuffUntil, Deathrattle
+from SDWLE.tags.base import Aura, AuraUntil, Effect, Buff, BuffUntil, Deathrattle, \
+    EngageAttack, EngageDefender, EngageSupporter, BuffUntilTurnEnded
 from SDWLE.tags.event import TurnEnded
 from SDWLE.tags.selector import CurrentPlayer
 from SDWLE.tags.status import Stealth, ChangeAttack, ChangeHealth, SetAttack, Charge, Taunt, DivineShield, \
     Windfury, NoSpellTarget, SpellDamage, MinimumHealth, CanAttack
 import SDWLE.targeting
 from SDWLE.tags.condition import IsAttacker, IsDefender, IsSupporter
-from SDWLE.tags.action import Give, EngageAttack, EngageDefender, EngageSupporter
-#TODO BUG why can't import engine moudle? (循环import)
-# ?from SDWLE.egine import Game
+from SDWLE.tags.action import Give
+#BUGFIX 重复循环import改成local import
+#from SDWLE.egine import Game
 
 
 class GameException(Exception):
@@ -594,6 +595,8 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
         target.combat_power = target_attack_power
         target.health = target.combat_power
 
+        print('my buffs {} / target buffs {}'.format(len(self.buffs), len(target.buffs)))
+
         self.player.playinfo('battle my attacker {0}+{1}={2} vs enemy {3}+{4}={5}'.format(
                                         my_attack, my_attack_support, my_attack_power,
                                         target_attack, target_attack_support, target_attack_power))
@@ -994,8 +997,10 @@ class Minion(Character):
         #SDW effects tag
         if engage:
             if isinstance(engage, tuple):
-                #TODO 处理engage是个元组
-                self.engage = engage
+                #处理engage是个元组
+                self.engage = []
+                for e in engage:
+                    self.engage.append(e)
             elif isinstance(engage, list):
                 self.engage = engage
             else:
@@ -1004,15 +1009,18 @@ class Minion(Character):
             self.engage = []
 
         if engage_attacker:
-            self.engage.append(EngageAttack(Give(BuffUntil(ChangeAttack(engage_attacker),TurnEnded(player=CurrentPlayer())))))
+            self.engage.append(EngageAttack(Give(BuffUntilTurnEnded(ChangeAttack(engage_attacker)))))
+            # self.engage.append(EngageAttack(Give(BuffUntil(ChangeAttack(engage_attacker),TurnEnded(player=CurrentPlayer())))))
             # self.buffs.append(Buff(ChangeAttack(engage_attacker),IsAttacker()))
             # self.buffs.append(Buff(EngageAttack(engage_attacker)))
         if engage_defender:
-            self.engage.append(EngageDefender(Give(BuffUntil(ChangeAttack(engage_defender),TurnEnded(player=CurrentPlayer())))))
+            self.engage.append(EngageDefender(Give(BuffUntilTurnEnded(ChangeAttack(engage_defender)))))
+            # self.engage.append(EngageDefender(Give(BuffUntil(ChangeAttack(engage_defender),TurnEnded(player=CurrentPlayer())))))
             # self.buffs.append(Buff(ChangeAttack(engage_defender),IsDefender()))
             # self.buffs.append(Buff(EngageDefender(engage_defender)))
         if engage_supporter:
-            self.engage.append(EngageSupporter(Give(BuffUntil(ChangeAttack(engage_supporter),TurnEnded(player=CurrentPlayer())))))
+            self.engage.append(EngageSupporter(Give(BuffUntilTurnEnded(ChangeAttack(engage_supporter)))))
+            # self.engage.append(EngageSupporter(Give(BuffUntil(ChangeAttack(engage_supporter),TurnEnded(player=CurrentPlayer())))))
             # self.buffs.append(Buff(ChangeAttack(engage_supporter),IsSupporter()))
             # self.buffs.append(Buff(EngageSupporter(engage_supporter)))
 
@@ -1268,8 +1276,9 @@ class Minion(Character):
         if self.dead or self.removed:
             raise GameException('tired: minion tired error! is dead')
 
-        if not self.exhausted:
-            raise GameException('tired: minion tired error! not exhausted')
+        #TODO 处理exhausted
+        # if not self.exhausted:
+        #     raise GameException('tired: minion tired error! not exhausted')
 
         if self.health <= 0:
             raise GameException('tired: minion tired error! health is 0')

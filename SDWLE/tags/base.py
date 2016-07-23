@@ -3,8 +3,12 @@ import copy
 import json
 import string
 
-class JSONObject(metaclass=abc.ABCMeta):
+# BUG! 修护重复循环import
+# from SDWLE.tags.selector import SelfSelector
+# from SDWLE.tags.action import Give
 
+
+class JSONObject(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def __to_json__(self):
         pass
@@ -65,7 +69,7 @@ class Aura(Tag):
 
     def match(self, obj):
         return (not self.condition or self.condition.evaluate(self.owner, self.owner)) and \
-            self.selector.match(self.owner, obj)
+               self.selector.match(self.owner, obj)
 
     def __to_json__(self):
         if self.condition:
@@ -223,7 +227,6 @@ class Player(metaclass=abc.ABCMeta):
 
 
 class Picker(JSONObject, metaclass=abc.ABCMeta):
-
     @abc.abstractmethod
     def pick(self, source, targets):
         pass
@@ -264,7 +267,6 @@ class Selector(JSONObject, metaclass=abc.ABCMeta):
 
 
 class Action(JSONObject, metaclass=abc.ABCMeta):
-
     @abc.abstractmethod
     def act(self, actor, target, other=None):
         pass
@@ -611,10 +613,6 @@ class CardQuery(JSONObject, metaclass=abc.ABCMeta):
             raise Exception(query['name'])
 
 
-class Battlecry(ActionTag):
-    def __init__(self, actions, selector, condition=None):
-        super().__init__(actions, selector, condition)
-
 class Choice(ActionTag):
     def __init__(self, card, actions, selector, condition=None):
         self.card = card
@@ -637,7 +635,6 @@ class Choice(ActionTag):
 
 
 class Function(JSONObject, metaclass=abc.ABCMeta):
-
     def do(self, target, *args):
         pass
 
@@ -705,3 +702,72 @@ class Context(metaclass=abc.ABCMeta):
         pass
 
 
+# SDW rule effect
+# Battlecry = 翻开时
+class Battlecry(ActionTag):
+    def __init__(self, actions, selector, condition=None):
+        super().__init__(actions, selector, condition)
+
+    def do(self, owner, target=None, other=None):
+        print('---!!do battlecry effect')
+        return super().do(owner, target, other)
+
+
+class Engage(ActionTag):
+    def __init__(self, actions, selector, condition=None):
+        # BUG! 修护重复循环import 改成local import
+        from SDWLE.tags.action import Give
+        super().__init__(actions, selector, condition)
+        # check buff must is BuffUntil w/ turnEnd condition: TurnEnded(player=CurrentPlayer())
+        if isinstance(actions, Give):
+            for buff in actions.buffs:
+                if not isinstance(buff, BuffUntil):
+                    raise ValueError('engage buff must BuffUntil')
+
+
+class EngageAttack(Engage):
+    # BUG! 修护重复循环import 改成local import
+    from SDWLE.tags.selector import SelfSelector
+
+    def __init__(self, actions, selector=SelfSelector(), condition=None):
+        super().__init__(actions, selector, condition)
+
+    def do(self, owner, target=None, other=None):
+        if not owner.attacker:
+            return False
+
+        return super().do(owner, target, other)
+
+
+class EngageDefender(Engage):
+    from SDWLE.tags.selector import SelfSelector
+
+    def __init__(self, actions, selector=SelfSelector(), condition=None):
+        super().__init__(actions, selector, condition)
+
+    def do(self, owner, target=None, other=None):
+        if not owner.defender:
+            return False
+
+        return super().do(owner, target, other)
+
+
+class EngageSupporter(Engage):
+    from SDWLE.tags.selector import SelfSelector
+
+    def __init__(self, actions, selector=SelfSelector(), condition=None):
+        super().__init__(actions, selector, condition)
+
+    def do(self, owner, target=None, other=None):
+        if not owner.supporter:
+            return False
+
+        return super().do(owner, target, other)
+
+
+class BuffUntilTurnEnded(BuffUntil):
+    from SDWLE.tags.event import TurnEnded
+    from SDWLE.tags.selector import CurrentPlayer
+
+    def __init__(self, status, until=TurnEnded(player=CurrentPlayer())):
+        super().__init__(status,until)

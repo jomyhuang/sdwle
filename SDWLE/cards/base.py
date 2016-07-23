@@ -279,7 +279,7 @@ class MinionCard(Card, metaclass=abc.ABCMeta):
         super().use(player, game)
         if (len(player.minions) >= 7 and not self._placeholder) or len(player.minions) >= 8:
             raise GameException("Cannot place a minion on a board with more than 7 minons on it")
-        pre_minion = self.main_minion
+        prev_minion = self.main_minion
         minion = self.create_minion(player)
         minion.linkcard(self, player, game)
         # minion.card = self
@@ -293,11 +293,11 @@ class MinionCard(Card, metaclass=abc.ABCMeta):
         #face-up
         if not self.support:
             if self.is_facedown():
-                if pre_minion:
+                if prev_minion:
                     self.facedown = False
-                    pre_minion.replace(minion)
+                    prev_minion.replace(minion)
                 else:
-                    raise GameException('card facedown minion error')
+                    raise GameException('card use: facedown minion error')
 
                 # if self._placeholder:
                 #     m = self._placeholder
@@ -307,11 +307,11 @@ class MinionCard(Card, metaclass=abc.ABCMeta):
                 # else:
                 #     raise GameException('card use no place holder')
             else:
-                if pre_minion:
-                    minion.index = pre_minion.index
-                    player.minions.remove(pre_minion)
+                if prev_minion:
+                    minion.index = prev_minion.index
+                    player.minions.remove(prev_minion)
                 else:
-                    raise GameException('card use no place holder error')
+                    raise GameException('card use: no place holder error')
                 minion.add_to_board()
                 # if self._placeholder:
                 #     minion.index = self._placeholder.index
@@ -326,23 +326,35 @@ class MinionCard(Card, metaclass=abc.ABCMeta):
             target_minion = target_card.main_minion
             self.main_minion.add_to_support(target_minion)
 
-        # card_attack = self.calculate_stat(ChangeAttack, 0)
-        # if card_attack:
-        #     minion.add_buff(Buff(ChangeAttack(card_attack)))
-
         player.trigger("minion_placed", minion)
+
         # if self.choices:
         #     choice = player.agent.choose_option(self.choices, player)
         #     choice.do(minion)
         # if self.combo and player.cards_played > 0:
         #     self.combo.do(minion)
         # else:
-        #     for battlecry in self.battlecry:
-        #         if not battlecry.do(minion, minion):
-        #             break
+
+        #SDW rule
+        #处理 battlecry (不是盖牌、支援)
+        if not (self.facedown or self.support):
+            for battlecry in self.battlecry:
+                if not battlecry.do(minion, minion):
+                    #battlecry 可以中断
+                    break
+
+            #将Card use阶段上ChangeAttack的Buff移转給Minion
+            card_attack = self.calculate_stat(ChangeAttack, 0)
+            if card_attack:
+                minion.add_buff(Buff(ChangeAttack(card_attack)))
+
+        #处理delay tigger
         game.check_delayed()
+
+        #处理如果在battlecry期间被replace后续
         # In case the minion has been replaced by its battlecry (e.g. Faceless Manipulator)
         minion = minion.replaced_by if minion.replaced_by else minion
+
         if not minion.removed:
             player.trigger("minion_played", minion)
             player.trigger("minion_summoned", minion)
