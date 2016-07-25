@@ -765,7 +765,7 @@ class EngageSupporter(Engage):
         return super().do(owner, target, other)
 
 
-class BuffUntilTurnEnded(BuffUntil):
+class BuffOneTurn(BuffUntil):
     from SDWLE.tags.event import TurnEnded
     from SDWLE.tags.selector import CurrentPlayer
 

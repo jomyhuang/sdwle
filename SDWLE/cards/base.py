@@ -79,7 +79,6 @@ class Card(Bindable, GameObject):
         self.current_target = None
         self.collectible = collectible
 
-
     def can_choose(self, player):
         """
         Verifies if this card can be chosen from a list of options (i.e. in Tracking)
@@ -101,8 +100,8 @@ class Card(Bindable, GameObject):
         """
         if game.game_ended:
             return False
-        #SDW rule
-        #return player.mana >= self.mana_cost()
+        # SDW rule
+        # return player.mana >= self.mana_cost()
         return True
 
     def mana_cost(self):
@@ -158,7 +157,7 @@ class Card(Bindable, GameObject):
         """
         Outputs a description of the card for debugging purposes.
         """
-        #SDW rule
+        # SDW rule
         # return self.name + " (" + str(self.mana) + " mana)"
         return self.name
 
@@ -178,6 +177,7 @@ class MinionCard(Card, metaclass=abc.ABCMeta):
     :see: :class:`Card`
     :see: :meth:`create_minion`
     """
+
     def __init__(self, name, mana, character_class, rarity, collectible=True,
                  minion_type=SDWLE.constants.MINION_TYPE.NONE,
                  color=COLOR_TYPE.NONE, star=0, nature=None,
@@ -191,24 +191,24 @@ class MinionCard(Card, metaclass=abc.ABCMeta):
         :param string name: The name of this card in English
         :param int mana: The base mana cost of this card
         :param int character_class: The character class that this card belongs to.  Should be a member of
-                                    :class:`hearthbreaker.constants.CHARACTER_CLASS`
+                                    :class:`SDWLE.constants.CHARACTER_CLASS`
         :param int rarity: How rare the card is.  Should be a member of :class:`hearthbreaker.constants.CARD_RARITY`
         :param int minion_type: The type that the summoned minion will have.  Should be a member of
-                                :class:`hearthbreaker.constants.MINION_TYPE`
+                                :class:`SDWLE.constants.MINION_TYPE`
         :param string ref_name: The name used for reference for this card.  If None (the default), the reference name
                                 will be the same as its name.  Otherwise, this name must be unique across all cards.
         :param battlecry: Describes the battlecry this minion will use when it enters the field, or None for no
                           battlecry
-        :type battlecry: :class:`hearthbreaker.tags.base.Battlecry`
-        :param choices: Gives a list of :class:`hearthbreaker.tags.base.Choice` s for the user to pick between
-        :type choices: [:class:`hearthbreaker.tags.base.Choice`]
+        :type battlecry: :class:`SDWLE.tags.base.Battlecry`
+        :param choices: Gives a list of :class:`SDWLE.tags.base.Choice` s for the user to pick between
+        :type choices: [:class:`SDWLE.tags.base.Choice`]
         :param combo: Describes the battlecry this minion will have if played after another card.  Note that this
                       does not count as a battlecry for cards such as Nerub'ar Weblord.
-        :type combo: :class:`hearthbreaker.tags.base.Battlecry`
+        :type combo: :class:`SDWLE.tags.base.Battlecry`
         :param effects:  The effects that will be triggered for this card (as opposed to the minion this card creates)
-            :type effects: [:class:`hearthbreaker.tags.base.Effect`]
+            :type effects: [:class:`SDWLE.tags.base.Effect`]
         :param buffs:  The buffs that will be applied directly to this card (as opposed to the minion this card creates)
-            :type buffs: [:class:`hearthbreaker.tags.base.Buff`]
+            :type buffs: [:class:`SDWLE.tags.base.Buff`]
         """
         super().__init__(name, mana, character_class, rarity, collectible, None, None, overload, ref_name,
                          effects, buffs)
@@ -222,8 +222,8 @@ class MinionCard(Card, metaclass=abc.ABCMeta):
             self.battlecry = ()
         self.choices = choices
         self.combo = combo
-        #SDW rule
-        #card attribute
+        # SDW rule
+        # card attribute
         self.color = color
         self.star = star
         self.nature = nature
@@ -231,7 +231,7 @@ class MinionCard(Card, metaclass=abc.ABCMeta):
         self.rank = rank
         self.ID = ID
         self.boxset = boxset
-        #special tag
+        # special tag
         self._placeholder = None
         self.facedown = False
         self.main_minion = None
@@ -285,12 +285,12 @@ class MinionCard(Card, metaclass=abc.ABCMeta):
         # minion.card = self
         # minion.player = player
         # minion.game = game
-        #SDW rule main minion纪录召唤的minion object
+        # SDW rule main minion纪录召唤的minion object
         # self.main_minion = minion
         self.support = support
 
-        #SDW rule
-        #face-up
+        # SDW rule
+        # face-up
         if not self.support:
             if self.is_facedown():
                 if prev_minion:
@@ -299,13 +299,13 @@ class MinionCard(Card, metaclass=abc.ABCMeta):
                 else:
                     raise GameException('card use: facedown minion error')
 
-                # if self._placeholder:
-                #     m = self._placeholder
-                #     self.facedown = False
-                #     m.replace(minion)
-                #     self._placeholder = None
-                # else:
-                #     raise GameException('card use no place holder')
+                    # if self._placeholder:
+                    #     m = self._placeholder
+                    #     self.facedown = False
+                    #     m.replace(minion)
+                    #     self._placeholder = None
+                    # else:
+                    #     raise GameException('card use no place holder')
             else:
                 if prev_minion:
                     minion.index = prev_minion.index
@@ -319,10 +319,10 @@ class MinionCard(Card, metaclass=abc.ABCMeta):
                 # else:
                 #     #minion.index = player.agent.choose_index(self, player)
                 #     raise GameException('card use no place holder')
-                #minion.add_to_board(minion.index)
+                # minion.add_to_board(minion.index)
                 # self._placeholder = None
         else:
-            #raise GameException('card use support')
+            # raise GameException('card use support')
             target_minion = target_card.main_minion
             self.main_minion.add_to_support(target_minion)
 
@@ -335,23 +335,23 @@ class MinionCard(Card, metaclass=abc.ABCMeta):
         #     self.combo.do(minion)
         # else:
 
-        #SDW rule
-        #处理 battlecry (不是盖牌、支援)
+        # SDW rule
+        # 处理 battlecry (不是盖牌、支援)
         if not (self.facedown or self.support):
             for battlecry in self.battlecry:
                 if not battlecry.do(minion, minion):
-                    #battlecry 可以中断
+                    # battlecry 可以中断
                     break
 
-            #将Card use阶段上ChangeAttack的Buff移转給Minion
+            # 将Card use阶段上ChangeAttack的Buff移转給Minion
             card_attack = self.calculate_stat(ChangeAttack, 0)
             if card_attack:
                 minion.add_buff(Buff(ChangeAttack(card_attack)))
 
-        #处理delay tigger
+        # 处理delay tigger
         game.check_delayed()
 
-        #处理如果在battlecry期间被replace后续
+        # 处理如果在battlecry期间被replace后续
         # In case the minion has been replaced by its battlecry (e.g. Faceless Manipulator)
         minion = minion.replaced_by if minion.replaced_by else minion
 
@@ -386,7 +386,7 @@ class MinionCard(Card, metaclass=abc.ABCMeta):
         if len(player.minions) < 7:
             self.attach(self, player)
             minion = self.create_minion(player)
-            #SDW rule new link minion with card
+            # SDW rule new link minion with card
             minion.linkcard(self, player, game, index)
             # minion.card = self
             # minion.player = player
@@ -400,7 +400,6 @@ class MinionCard(Card, metaclass=abc.ABCMeta):
 
     def create_minion_facedown(self, player):
         return Minion(0, 0, facedown=True)
-
 
     @abc.abstractmethod
     def create_minion(self, player):

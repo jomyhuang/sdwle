@@ -9,7 +9,7 @@ from SDWLE.tags.action import Heal, Summon, Draw, \
     RemoveDivineShields, DecreaseDurability, IncreaseDurability, IncreaseWeaponAttack, Destroy, GiveEffect, SwapStats, \
     Joust, RemoveFromDeck, RemoveSecret
 from SDWLE.tags.base import Effect, Deathrattle, Battlecry, Aura, BuffUntil, Buff, AuraUntil, ActionTag, \
-    EngageAttack, EngageDefender, EngageSupporter, BuffUntilTurnEnded
+    EngageAttack, EngageDefender, EngageSupporter, BuffOneTurn
 from SDWLE.tags.card_source import CardList, LastCard, DeckSource, Same, CollectionSource
 from SDWLE.tags.condition import Adjacent, IsType, MinionHasDeathrattle, IsMinion, IsSecret, \
     MinionIsTarget, IsSpell, IsDamaged, InGraveyard, ManaCost, OpponentMinionCountIsGreaterThan, AttackGreaterThan, \
@@ -37,14 +37,13 @@ class SDW01(MinionCard):
                          minion_type=MINION_TYPE.BEAST)
 
     def create_minion(self, player):
-        return Minion(100, 150, troop=TROOP_TYPE.A)
+        return Minion(100, 150, attack_name='普通攻击', attack_sp_name='瞬间一击', troop=TROOP_TYPE.A)
 
 
 class SDW02(MinionCard):
     def __init__(self):
         super().__init__("布莱克", 1, CHARACTER_CLASS.ALL, CARD_RARITY.COMMON,
                          minion_type=MINION_TYPE.BEAST)
-
 
     def create_minion(self, player):
         return Minion(110, 120, troop=TROOP_TYPE.T)
@@ -76,6 +75,7 @@ class SDWBasicA(MinionCard):
     def create_minion(self, player):
         return Minion(100, 120, troop=TROOP_TYPE.A)
 
+
 class SDWBasicT(MinionCard):
     def __init__(self):
         super().__init__("Basic T", 1, CHARACTER_CLASS.ALL, CARD_RARITY.COMMON,
@@ -84,6 +84,7 @@ class SDWBasicT(MinionCard):
     def create_minion(self, player):
         return Minion(100, 120, troop=TROOP_TYPE.T)
 
+
 class SDWBasicH(MinionCard):
     def __init__(self):
         super().__init__("Basic H", 1, CHARACTER_CLASS.ALL, CARD_RARITY.COMMON,
@@ -91,6 +92,7 @@ class SDWBasicH(MinionCard):
 
     def create_minion(self, player):
         return Minion(100, 120, troop=TROOP_TYPE.H)
+
 
 class SDWBasic01(MinionCard):
     def __init__(self):
@@ -101,21 +103,20 @@ class SDWBasic01(MinionCard):
 
     def create_minion(self, player):
         return Minion(100, 120, troop=TROOP_TYPE.A,
-                      engage=(EngageAttack(Give(BuffUntilTurnEnded(ChangeAttack(1000)))),
-                      # engage=(EngageAttack(Give(Buff(ChangeAttack(1000)))),
-                              EngageAttack(Draw(3),PlayerSelector())),
+                      engage=(EngageAttack(Give(BuffOneTurn(ChangeAttack(1000)))),
+                              # engage=(EngageAttack(Give(Buff(ChangeAttack(1000)))),
+                              EngageAttack(Draw(3), PlayerSelector())),
                       engage_attacker=200, engage_supporter=150, engage_defender=50)
 
 
 class SDWBasic02(MinionCard):
     def __init__(self):
         super().__init__("SDWBasic02-battrycry", 1, CHARACTER_CLASS.ALL, CARD_RARITY.FREE,
-                        color=COLOR_TYPE.YELLOW, star=7, nature=NATURE_TYPE.THUNDER,
+                         color=COLOR_TYPE.YELLOW, star=7, nature=NATURE_TYPE.THUNDER,
                          alliance='战神联盟', rank=None, ID='SDWBasic02', boxset='test',
                          minion_type=MINION_TYPE.BEAST,
                          battlecry=(Battlecry(Give(Buff(ChangeAttack(200))), SelfSelector()),
-                                    Battlecry(Draw(4), PlayerSelector())
-                                    )
+                                    Battlecry(Draw(4), PlayerSelector()))
                          )
 
     def create_minion(self, player):
