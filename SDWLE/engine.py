@@ -7,7 +7,6 @@ import SDWLE.tags
 from SDWLE.tags.base import Effect, AuraUntil
 import SDWLE.targeting
 
-
 card_table = {}
 
 
@@ -47,7 +46,6 @@ def get_cards():
 
 
 class Game(Bindable):
-
     Session = None
 
     def __init__(self, decks, agents, random_order=True):
@@ -61,12 +59,12 @@ class Game(Bindable):
                 play_order = [1, 0]
         else:
             play_order = [0, 1]
-        #SDW rule
-        #player name / 判定胜负的玩家标示 player_id
+        # SDW rule
+        # player name / 判定胜负的玩家标示 player_id
         play_name = ["deck-A", "deck-B"]
-        self.players = [Player(play_name[play_order[0]]+'#one', decks[play_order[0]], agents[play_order[0]], self,
+        self.players = [Player(play_name[play_order[0]] + '#one', decks[play_order[0]], agents[play_order[0]], self,
                                player_id=play_order[0]),
-                        Player(play_name[play_order[1]]+'#two', decks[play_order[1]], agents[play_order[1]], self,
+                        Player(play_name[play_order[1]] + '#two', decks[play_order[1]], agents[play_order[1]], self,
                                player_id=play_order[1])]
         # self.players = [Player("one", decks[play_order[0]], agents[play_order[0]], self),
         #                 Player("two", decks[play_order[1]], agents[play_order[1]], self)]
@@ -82,10 +80,9 @@ class Game(Bindable):
         self._all_cards_played = []
         self._turns_passed = 0
         self.selected_card = None
-        #SDW rule
+        # SDW rule
         Game.Session = self
         self.winner = None
-
 
     def random_draw(self, cards, requirement):
         filtered_cards = [card for card in filter(requirement, cards)]
@@ -113,11 +110,11 @@ class Game(Bindable):
             return
         self.__pre_game_run = True
 
-        #SDW rule 起始手牌5张
+        # SDW rule 起始手牌5张
         p1_draw = [self.players[0].deck.draw(self) for i in range(5)]
         p2_draw = [self.players[1].deck.draw(self) for i in range(5)]
 
-        #调度手牌
+        # 调度手牌
         card_keep_index = self.players[0].agent.do_card_check(p1_draw)
         self.trigger("kept_cards", p1_draw, card_keep_index)
 
@@ -147,12 +144,12 @@ class Game(Bindable):
         for card in self.players[1].hand:
             card.attach(card, self.players[1])
 
-        #SDW delete
-        #coin = card_lookup("The Coin")
-        #coin.player = self.players[1]
-        #self.players[1].hand.append(coin)
+        # SDW delete
+        # coin = card_lookup("The Coin")
+        # coin.player = self.players[1]
+        # self.players[1].hand.append(coin)
 
-        #SDW rule 部署5张起始牌
+        # SDW rule 部署5张起始牌
         for card_index in range(5):
             card = self.players[0].deck.draw(self)
             card.attach(card, self.players[0])
@@ -194,9 +191,9 @@ class Game(Bindable):
             self.current_player = self.players[0]
             self.other_player = self.players[1]
             # self._turns_passed += 1
-        #SDW rule 更换玩家就增加回合数
+        # SDW rule 更换玩家就增加回合数
         self._turns_passed += 1
-        #SDW rule TODO 超过一定回合自动结束游戏?
+        # SDW rule TODO 超过一定回合自动结束游戏?
         if self._turns_passed >= 15:
             self.players[0].hero.dead = True
             self.players[1].hero.dead = True
@@ -227,7 +224,7 @@ class Game(Bindable):
         from SDWLE.tags.status import Frozen
         self.current_player.trigger("turn_ended")
         if self.current_player.hero.frozen and \
-                self.current_player.hero.attacks_performed < self.current_player.hero.attacks_allowed():
+                        self.current_player.hero.attacks_performed < self.current_player.hero.attacks_allowed():
             self.current_player.hero.frozen = 0
             self.current_player.hero.buffs = \
                 [buff for buff in self.current_player.hero.buffs if not isinstance(buff, Frozen)]
@@ -291,18 +288,18 @@ class Game(Bindable):
             secret.activate(copied_game.other_player)
         return copied_game
 
-    #SDW rule
+    # SDW rule
     def play_card_facedown(self, card):
         if self.game_ended:
             raise GameException("The game has ended")
-        #if not card.can_use(self.current_player, self):
+        # if not card.can_use(self.current_player, self):
         #    raise GameException("That card cannot be used")
         self._all_cards_played.append(card)
         card.target = None
         card.current_target = None
         self.last_card = card
 
-        #SDW rule
+        # SDW rule
         card.facedown = True
 
         facedown_minion = card.create_minion_facedown(card.player)
@@ -312,12 +309,12 @@ class Game(Bindable):
         # facedown_minion.card = card
         # facedown_minion.player = card.player
         # facedown_minion.game = self
-        #index = len(card.player.minions)
+        # index = len(card.player.minions)
         # #fix placeholder 需要?
         # card._placeholder = facedown_minion
 
-        #if card.is_minion():
-        #if True:
+        # if card.is_minion():
+        # if True:
         #    card._placeholder = Minion(0, 0)
         #    index = len(card.player.minions)+1
         #    #for minion in self.current_player.minions[index:]:
@@ -328,13 +325,13 @@ class Game(Bindable):
         #    card._placeholder.player = card.player
         card.player.trigger("card_played_facedown", card, facedown_minion)
 
-        #if not card.cancel:
+        # if not card.cancel:
         #    card.use(self.current_player, self)
         #    card.unattach()
         #    self.current_player.trigger("card_used", card)
         #    self.current_player.cards_played += 1
         #    self.check_delayed()
-        #card.current_target = None
+        # card.current_target = None
 
     def play_support_card(self, card, target_card):
         if self.game_ended:
@@ -346,8 +343,8 @@ class Game(Bindable):
         if not card.is_minion():
             raise GameException('support card is not minion card')
 
-        #SDW rule fix card player from Card not/ game.current_player
-        #修正非玩家回合出牌的函数绑定
+        # SDW rule fix card player from Card not/ game.current_player
+        # 修正非玩家回合出牌的函数绑定
         card_player = card.player
         # card_index = self.current_player.hand.index(card)
         card_index = card_player.hand.index(card)
@@ -362,14 +359,14 @@ class Game(Bindable):
 
         self.last_card = card
         # if card.is_minion():
-            # card._placeholder = Minion(0, 0)
-            # index = self.current_player.agent.choose_index(card, self.current_player)
-            # for minion in self.current_player.minions[index:]:
-            #     minion.index += 1
-            # self.current_player.minions.insert(index, card._placeholder)
-            # card._placeholder.index = index
-            # card._placeholder.card = card
-            # card._placeholder.player = self.current_player
+        # card._placeholder = Minion(0, 0)
+        # index = self.current_player.agent.choose_index(card, self.current_player)
+        # for minion in self.current_player.minions[index:]:
+        #     minion.index += 1
+        # self.current_player.minions.insert(index, card._placeholder)
+        # card._placeholder.index = index
+        # card._placeholder.card = card
+        # card._placeholder.player = self.current_player
         card_player.trigger("support_card_played", card, target_card)
 
         if not card.cancel:
@@ -384,9 +381,8 @@ class Game(Bindable):
         # overload is applied regardless of counterspell, but after the card is played
         self.current_player.upcoming_overload += card.overload
 
-
     def play_card(self, card):
-        #TODO fix play_card function
+        # TODO fix play_card function
         raise GameException('play_card not work yet!')
         if self.game_ended:
             raise GameException("The game has ended")
@@ -410,7 +406,7 @@ class Game(Bindable):
             index = self.current_player.agent.choose_index(card, self.current_player)
             for minion in self.current_player.minions[index:]:
                 minion.index += 1
-            #TODO 取消insert?
+            # TODO 取消insert?
             self.current_player.minions.insert(index, card._placeholder)
             card._placeholder.index = index
             card._placeholder.card = card
@@ -482,7 +478,8 @@ class Game(Bindable):
             index += 1
         return new_game
 
-#SDW rule
+
+# SDW rule
 class BattleField(list):
     MAX_FIELDS = 5
 
@@ -500,7 +497,7 @@ class BattleField(list):
     def insert(self, index, p_object):
         if len(self) >= BattleField.MAX_FIELDS:
             raise GameException("battlefield can't insert")
-        super().insert(index,p_object)
+        super().insert(index, p_object)
 
     def is_empty(self):
         return len(self) <= 0
@@ -517,10 +514,10 @@ class Player(Bindable):
         self.hand = []
         self.agent = agent
         self.opponent = None
-        #TODO check usages
+        # TODO check usages
         self.cards_played = 0
-        #SDW rule
-        #player_id 用于标示实际玩家标示
+        # SDW rule
+        # player_id 用于标示实际玩家标示
         self.player_id = player_id
         self.minions = BattleField()
         self.combat_win_times = 0
@@ -535,7 +532,7 @@ class Player(Bindable):
         self.graveyard_blackhole = []
         self.dead_this_turn = []
 
-        #hearthbreaker attribute
+        # hearthbreaker attribute
         self.spell_damage = 0
         self.mana = 0
         self.max_mana = 0
@@ -556,7 +553,7 @@ class Player(Bindable):
     def __str__(self):  # pragma: no cover
         return "Player: " + self.name
 
-    #SDW rule
+    # SDW rule
     def _remove_combat_tag(self):
         self.combat_minion = None
         self.support_minion = None
@@ -648,6 +645,7 @@ class Player(Bindable):
             effect.unapply()
             self.effects.remove(effect)
             effect.event.unbind(self.hero, remove_effect)
+
         self.effects.append(effect)
         effect.set_owner(self.hero)
         effect.apply()
@@ -676,7 +674,7 @@ class Player(Bindable):
     def choose_target(self, targets):
         return self.agent.choose_target(targets)
 
-    #SDW rule
+    # SDW rule
     def playinfo(self, text):
         return self.agent.playinfo(text)
 
@@ -750,7 +748,7 @@ class Player(Bindable):
 
 class Deck:
     def __init__(self, cards, hero):
-        #SDW rule TODO deck numbers
+        # SDW rule TODO deck numbers
         if len(cards) != 30:
             raise GameException("Deck must have exactly 30 cards in it")
         self.cards = cards
@@ -764,6 +762,7 @@ class Deck:
             new_card = type(card)()
             new_card.drawn = card.drawn
             return new_card
+
         new_deck = Deck.__new__(Deck)
         new_deck.cards = [copy_card(card) for card in self.cards]
         new_deck.hero = self.hero

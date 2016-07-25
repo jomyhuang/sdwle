@@ -724,6 +724,14 @@ class Engage(ActionTag):
                 if not isinstance(buff, BuffUntil):
                     raise ValueError('engage buff must BuffUntil')
 
+        self.engagefunc = lambda obj: True
+
+    def do(self, owner, target=None, other=None):
+        if not self.engagefunc(owner):
+            return False
+        print('active engage effect {} {}'.format(owner, type(self)))
+        return super().do(owner, target, other)
+
 
 class EngageAttack(Engage):
     # BUG! 修护重复循环import 改成local import
@@ -731,12 +739,12 @@ class EngageAttack(Engage):
 
     def __init__(self, actions, selector=SelfSelector(), condition=None):
         super().__init__(actions, selector, condition)
+        self.engagefunc = lambda obj: obj.attacker
 
-    def do(self, owner, target=None, other=None):
-        if not owner.attacker:
-            return False
+        # def do(self, owner, target=None, other=None):
+        #     if not owner.attacker:
+        #         return False
 
-        return super().do(owner, target, other)
 
 
 class EngageDefender(Engage):
@@ -744,12 +752,13 @@ class EngageDefender(Engage):
 
     def __init__(self, actions, selector=SelfSelector(), condition=None):
         super().__init__(actions, selector, condition)
+        self.engagefunc = lambda obj: obj.defender
 
-    def do(self, owner, target=None, other=None):
-        if not owner.defender:
-            return False
-
-        return super().do(owner, target, other)
+        # def do(self, owner, target=None, other=None):
+        #     if not owner.defender:
+        #         return False
+        #
+        #     return super().do(owner, target, other)
 
 
 class EngageSupporter(Engage):
@@ -757,12 +766,13 @@ class EngageSupporter(Engage):
 
     def __init__(self, actions, selector=SelfSelector(), condition=None):
         super().__init__(actions, selector, condition)
+        self.engagefunc = lambda obj: obj.supporter
 
-    def do(self, owner, target=None, other=None):
-        if not owner.supporter:
-            return False
-
-        return super().do(owner, target, other)
+        # def do(self, owner, target=None, other=None):
+        #     if not owner.supporter:
+        #         return False
+        #
+        #     return super().do(owner, target, other)
 
 
 class BuffOneTurn(BuffUntil):

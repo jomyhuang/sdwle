@@ -425,10 +425,13 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
         # move from minion/hero subclass
         self.exhausted = True
         self.current_target = None
-        # combat tag
+        # combat tag / engage
         self.attacker = False
         self.defender = False
         self.supporter = False
+        self.combat_win = False
+        self.combat_lose = False
+        self.combat_draw = False
         self.combat_power = 0
 
     def _remove_stealth(self):
@@ -1015,14 +1018,8 @@ class Minion(Character):
             # self.buffs.append(Buff(EngageAttack(engage_attacker)))
         if engage_defender:
             self.engage.append(EngageDefender(Give(BuffOneTurn(ChangeAttack(engage_defender)))))
-            # self.engage.append(EngageDefender(Give(BuffUntil(ChangeAttack(engage_defender),TurnEnded(player=CurrentPlayer())))))
-            # self.buffs.append(Buff(ChangeAttack(engage_defender),IsDefender()))
-            # self.buffs.append(Buff(EngageDefender(engage_defender)))
         if engage_supporter:
             self.engage.append(EngageSupporter(Give(BuffOneTurn(ChangeAttack(engage_supporter)))))
-            # self.engage.append(EngageSupporter(Give(BuffUntil(ChangeAttack(engage_supporter),TurnEnded(player=CurrentPlayer())))))
-            # self.buffs.append(Buff(ChangeAttack(engage_supporter),IsSupporter()))
-            # self.buffs.append(Buff(EngageSupporter(engage_supporter)))
 
         # HB effects tag
         if deathrattle:
@@ -1332,7 +1329,7 @@ class Minion(Character):
         return True
 
     def __str__(self):  # pragma: no cover
-        return "{0} ({1}) {3} index {2}".format(self.card.name, self.calculate_attack(), self.index,
+        return "{0} ({1})-{3}-index:{2}".format(self.card.name, self.calculate_attack(), self.index,
                                                 'facedown' if self.facedown else '')
 
     def copy(self, new_owner, new_game=None):

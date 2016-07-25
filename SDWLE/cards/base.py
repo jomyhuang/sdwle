@@ -227,7 +227,7 @@ class MinionCard(Card, metaclass=abc.ABCMeta):
         self.color = color
         self.star = star
         self.nature = nature
-        self.team = alliance
+        self.alliance = alliance
         self.rank = rank
         self.ID = ID
         self.boxset = boxset
@@ -298,7 +298,6 @@ class MinionCard(Card, metaclass=abc.ABCMeta):
                     prev_minion.replace(minion)
                 else:
                     raise GameException('card use: facedown minion error')
-
                     # if self._placeholder:
                     #     m = self._placeholder
                     #     self.facedown = False
@@ -312,7 +311,7 @@ class MinionCard(Card, metaclass=abc.ABCMeta):
                     player.minions.remove(prev_minion)
                 else:
                     raise GameException('card use: no place holder error')
-                minion.add_to_board()
+                    # minion.add_to_board()
                 # if self._placeholder:
                 #     minion.index = self._placeholder.index
                 #     player.minions.remove(self._placeholder)
