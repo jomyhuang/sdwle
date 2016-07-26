@@ -709,7 +709,7 @@ class Battlecry(ActionTag):
         super().__init__(actions, selector, condition)
 
     def do(self, owner, target=None, other=None):
-        print('---!!do battlecry effect')
+        print('!!battlecry effect {} {}'.format(owner, type(self)))
         return super().do(owner, target, other)
 
 
@@ -729,7 +729,7 @@ class Engage(ActionTag):
     def do(self, owner, target=None, other=None):
         if not self.engagefunc(owner):
             return False
-        print('active engage effect {} {}'.format(owner, type(self)))
+        print('!!engage effect {} {}'.format(owner, type(self)))
         return super().do(owner, target, other)
 
 

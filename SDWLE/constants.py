@@ -88,7 +88,6 @@ class MINION_TYPE:
 
     @staticmethod
     def from_str(type_name):
-
         return MINION_TYPE.__types[type_name.upper()]
 
     @staticmethod
@@ -113,7 +112,6 @@ class TROOP_TYPE:
 
     @staticmethod
     def from_str(type_name):
-
         return TROOP_TYPE.__types[type_name.upper()]
 
     @staticmethod
@@ -144,7 +142,6 @@ class COLOR_TYPE:
 
     @staticmethod
     def from_str(type_name):
-
         return COLOR_TYPE.__types[type_name.upper()]
 
     @staticmethod
@@ -167,10 +164,36 @@ class NATURE_TYPE:
 
     @staticmethod
     def from_str(type_name):
-
         return NATURE_TYPE.__types[type_name.upper()]
 
     @staticmethod
     def to_str(number):
         types = dict(zip(NATURE_TYPE.__types.values(), NATURE_TYPE.__types.keys()))
+        return types[number].capitalize()
+
+
+class GAMESTATE:
+    NONE = 0
+    START = 1
+    PRE_GAME = 2
+    TURN = 3
+    NEXT_TURN = 4
+    GAME_OVER = 5
+
+    __types = {
+        "NONE": NONE,
+        "START": START,
+        "PRE_GAME": PRE_GAME,
+        "TURN": TURN,
+        'NEXT_TURN': NEXT_TURN,
+        'GAME_OVER': GAME_OVER,
+    }
+
+    @staticmethod
+    def from_str(type_name):
+        return GAMESTATE.__types[type_name.upper()]
+
+    @staticmethod
+    def to_str(number):
+        types = dict(zip(GAMESTATE.__types.values(), GAMESTATE.__types.keys()))
         return types[number].capitalize()

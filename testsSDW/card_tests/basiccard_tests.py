@@ -10,7 +10,7 @@ from SDWLE.agents.basic_agents import RandomAgent, PredictableAgent
 from SDWLE.engine import Game, Deck
 from testsSDW.testing_utils import generate_game_for, StackedDeck, Stacked5Deck
 from SDWLE.cards import SDW01, SDW02, SDW03, SDW04, SDWBasicA, SDWBasicH, SDWBasicT, SDWBasic01, SDWBasic02
-from SDWLE.constants import CARD_RARITY, CHARACTER_CLASS, MINION_TYPE, TROOP_TYPE, COLOR_TYPE, NATURE_TYPE
+from SDWLE.constants import GAMESTATE, CHARACTER_CLASS, MINION_TYPE, TROOP_TYPE, COLOR_TYPE, NATURE_TYPE
 
 class BasicCardTest(unittest.TestCase):
 
@@ -106,7 +106,7 @@ class BasicCardTest(unittest.TestCase):
         deckA_support = SDWBasic01
         deckA_draw = SDW03
         # mock card
-        deckB_attack = SDWBasicA
+        deckB_attack = SDWBasic01
         deckB_support = SDWBasicA
         deckB_draw = SDWBasicA
 
@@ -122,7 +122,7 @@ class BasicCardTest(unittest.TestCase):
         defender = game.players[1].combat_minion
 
         self.assertEqual(attacker.combat_power, 1550)
-        self.assertEqual(defender.combat_power, 200)
+        self.assertEqual(defender.combat_power, 250)
 
         print('draw card 3/hand %d' % (len(game.players[0].hand)))
         self.assertEqual(len(game.players[0].hand), 11)

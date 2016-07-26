@@ -10,11 +10,26 @@ from testsSDW.agents.testing_agents import CardTestingAgent, OneCardPlayingAgent
 from testsSDW.testing_utils import generate_game_for, mock
 from SDWLE.cards import StonetuskBoar, ArcaneIntellect, Naturalize, Abomination, NerubianEgg, SylvanasWindrunner
 from SDWLE.game_objects import Bindable
+from SDWLE.cards import SDW01, SDW02, SDW03, SDW04, SDWBasicA, SDWBasicH, SDWBasicT, SDWBasic01, SDWBasic02
+from SDWLE.constants import GAMESTATE, CHARACTER_CLASS, MINION_TYPE, TROOP_TYPE, COLOR_TYPE, NATURE_TYPE
 
 
 class TestGame(unittest.TestCase):
     def setUp(self):
         random.seed(1857)
+
+    def test_state_machine(self):
+        game = generate_game_for([SDW01, SDW02, SDW03],
+                                 [SDW03, SDW04, SDW02],
+                                 PredictableAgent, PredictableAgent, random_order=False)
+
+        game.state_init(GAMESTATE.START)
+
+        for i in range(20):
+            game.state_step()
+
+        self.assertEqual(game.game_ended, True)
+
 
     def test_create_game(self):
         card_set1 = []
@@ -80,6 +95,8 @@ class TestGame(unittest.TestCase):
         game = Game([deck1, deck2], [agent1, agent2])
 
         game.start()
+
+        self.assertEqual(game.game_ended, True)
 
     # def test_secrets(self):
     #     for secret_type in SecretCard.__subclasses__():
