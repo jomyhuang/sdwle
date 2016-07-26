@@ -739,12 +739,11 @@ class EngageAttack(Engage):
 
     def __init__(self, actions, selector=SelfSelector(), condition=None):
         super().__init__(actions, selector, condition)
-        self.engagefunc = lambda obj: obj.attacker
+        self.engagefunc = lambda obj: obj.attacker and not obj.combat_over and obj.is_combat
 
         # def do(self, owner, target=None, other=None):
         #     if not owner.attacker:
         #         return False
-
 
 
 class EngageDefender(Engage):
@@ -752,7 +751,7 @@ class EngageDefender(Engage):
 
     def __init__(self, actions, selector=SelfSelector(), condition=None):
         super().__init__(actions, selector, condition)
-        self.engagefunc = lambda obj: obj.defender
+        self.engagefunc = lambda obj: obj.defender and not obj.combat_over and obj.is_combat
 
         # def do(self, owner, target=None, other=None):
         #     if not owner.defender:
@@ -766,13 +765,37 @@ class EngageSupporter(Engage):
 
     def __init__(self, actions, selector=SelfSelector(), condition=None):
         super().__init__(actions, selector, condition)
-        self.engagefunc = lambda obj: obj.supporter
+        self.engagefunc = lambda obj: obj.supporter and not obj.combat_over and obj.is_combat
 
         # def do(self, owner, target=None, other=None):
         #     if not owner.supporter:
         #         return False
         #
         #     return super().do(owner, target, other)
+
+
+class EngageWin(Engage):
+    from SDWLE.tags.selector import SelfSelector
+
+    def __init__(self, actions, selector=SelfSelector(), condition=None):
+        super().__init__(actions, selector, condition)
+        self.engagefunc = lambda obj: obj.combatWin and obj.combat_over and obj.is_combat
+
+
+class EngageLose(Engage):
+    from SDWLE.tags.selector import SelfSelector
+
+    def __init__(self, actions, selector=SelfSelector(), condition=None):
+        super().__init__(actions, selector, condition)
+        self.engagefunc = lambda obj: obj.combatLose and obj.combat_over and obj.is_combat
+
+
+class EngageDraw(Engage):
+    from SDWLE.tags.selector import SelfSelector
+
+    def __init__(self, actions, selector=SelfSelector(), condition=None):
+        super().__init__(actions, selector, condition)
+        self.engagefunc = lambda obj: obj.combatDraw and obj.combat_over and obj.is_combat
 
 
 class BuffOneTurn(BuffUntil):

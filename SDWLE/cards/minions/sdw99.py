@@ -9,7 +9,7 @@ from SDWLE.tags.action import Heal, Summon, Draw, \
     RemoveDivineShields, DecreaseDurability, IncreaseDurability, IncreaseWeaponAttack, Destroy, GiveEffect, SwapStats, \
     Joust, RemoveFromDeck, RemoveSecret
 from SDWLE.tags.base import Effect, Deathrattle, Battlecry, Aura, BuffUntil, Buff, AuraUntil, ActionTag, \
-    EngageAttack, EngageDefender, EngageSupporter, BuffOneTurn
+    EngageAttack, EngageDefender, EngageSupporter, BuffOneTurn, EngageWin, EngageDraw, EngageLose
 from SDWLE.tags.card_source import CardList, LastCard, DeckSource, Same, CollectionSource
 from SDWLE.tags.condition import Adjacent, IsType, MinionHasDeathrattle, IsMinion, IsSecret, \
     MinionIsTarget, IsSpell, IsDamaged, InGraveyard, ManaCost, OpponentMinionCountIsGreaterThan, AttackGreaterThan, \
@@ -105,7 +105,9 @@ class SDWBasic01(MinionCard):
         return Minion(100, 120, troop=TROOP_TYPE.A,
                       engage=(EngageAttack(Give(BuffOneTurn(ChangeAttack(1000)))),
                               # engage=(EngageAttack(Give(Buff(ChangeAttack(1000)))),
-                              EngageAttack(Draw(3), PlayerSelector())),
+                              EngageAttack(Draw(3), PlayerSelector()),
+                              EngageWin(Draw(3), PlayerSelector()),
+                              EngageLose(Draw(2), PlayerSelector())),
                       engage_attacker=200, engage_supporter=150, engage_defender=50)
 
 

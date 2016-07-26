@@ -425,14 +425,8 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
         # move from minion/hero subclass
         self.exhausted = True
         self.current_target = None
-        # combat tag / engage
-        self.attacker = False
-        self.defender = False
-        self.supporter = False
-        self.combat_win = False
-        self.combat_lose = False
-        self.combat_draw = False
-        self.combat_power = 0
+        # combat tag init
+        self._remove_combat_tag()
 
     def _remove_stealth(self):
         if self.stealth:
@@ -442,10 +436,15 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
             self.buffs = [buff for buff in self.buffs if not isinstance(buff.status, Stealth)]
 
     def _remove_combat_tag(self):
+        self.is_combat = False
         self.attacker = False
         self.defender = False
         self.supporter = False
         self.combat_power = 0
+        self.combat_over = False
+        self.combatWin = False
+        self.combatLose = False
+        self.combatDraw = False
 
     def linkcard(self, card, player, game, index=0):
         self.card = card
@@ -460,7 +459,7 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
         if not isinstance(self.game, SDWLE.engine.Game):
             raise GameException('game instance error')
 
-        # copy minion informat to Card
+        # copy minion attribute to Card
         card.main_minion = self
         card.attack_power = self.attack_power
         card.attack_power_sp = self.attack_power_sp
@@ -532,17 +531,19 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
         player = self.player
         opponent_player = self.player.opponent
 
+        # player combat tag
         player._remove_combat_tag()
         opponent_player._remove_combat_tag()
+
+        player.combat_minion = self
+        opponent_player.combat_minion = target
+
+        # minion combat tag
         self._remove_combat_tag()
         target._remove_combat_tag()
 
         self.attacker = True
         target.defender = True
-
-        # set player combat tag
-        player.combat_minion = self
-        opponent_player.combat_minion = target
 
         support_card = self.choose_support_card(self.player)
         # self.player.playinfo('my support {0}'.format(support_card.name))
@@ -552,6 +553,7 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
             'attacker support minions {0} {1}'.format(len(self.support_minions), self.support_minions[0].card.name))
 
         support_minion = self.support_minions[0]
+        support_minion._remove_combat_tag()
         support_minion.supporter = True
 
         other_player = self.player.game.other_player
@@ -564,6 +566,7 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
             'enemy support minions {0} {1}'.format(len(target.support_minions), target.support_minions[0].card.name))
 
         target_support_minion = target.support_minions[0]
+        target_support_minion._remove_combat_tag()
         target_support_minion.supporter = True
 
         # set player combat tag
@@ -584,47 +587,65 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
         # SDW rule 处理 engage effect
         # TODO 回合结束后如何处理engage
         # TODO 解决如何重复增加Buff, 目前使用BuffUntil( ,turned )
-        self._do_engage()
-        support_minion._do_engage()
-        target._do_engage()
-        target_support_minion._do_engage()
+        engage_list = [self, support_minion, target, target_support_minion]
 
-        my_attack = self.calculate_attack()
+        # 处理engage phase 1
+        for m in engage_list:
+            m.is_combat = True
+            m._do_engage()
+
+        # self._do_engage()
+        # support_minion._do_engage()
+        # target._do_engage()
+        # target_support_minion._do_engage()
+
+        my_attack_power = self.calculate_attack()
         my_attack_support = support_minion.calculate_attack()
-        my_attack_power = my_attack + my_attack_support
-        self.combat_power = my_attack_power
+        my_combat_power = my_attack_power + my_attack_support
+        self.combat_power = my_combat_power
         self.health = self.combat_power
 
-        target_attack = target.calculate_attack()
+        target_attack_power = target.calculate_attack()
         target_attack_support = target_support_minion.calculate_attack()
-        target_attack_power = target_attack + target_attack_support
-        target.combat_power = target_attack_power
+        target_combat_power = target_attack_power + target_attack_support
+        target.combat_power = target_combat_power
         target.health = target.combat_power
 
         print('my buffs {} / target buffs {}'.format(len(self.buffs), len(target.buffs)))
 
         self.player.playinfo('battle my attacker {0}+{1}={2} vs enemy {3}+{4}={5}'.format(
-            my_attack, my_attack_support, my_attack_power,
-            target_attack, target_attack_support, target_attack_power))
+            my_attack_power, my_attack_support, my_combat_power,
+            target_attack_power, target_attack_support, target_combat_power))
 
         # 伤害处理
-        target.sdw_damage(my_attack_power, self)
-        self.sdw_damage(target_attack_power, target)
+        target.sdw_damage(my_combat_power, self)
+        self.sdw_damage(target_combat_power, target)
 
         # 标记胜负
         # TODO tigger 胜负event
-        if my_attack_power > target_attack_power:
+        if my_combat_power > target_combat_power:
             self.player.playinfo('{} 攻击方获胜'.format(self.player.name))
+            self.combatWin = True
+            target.combatLose = True
             player.combat_win_times += 1
             opponent_player.combat_lose_times += 1
-        elif my_attack_power < target_attack_power:
+        elif my_combat_power < target_combat_power:
             self.player.playinfo('{} 防守方获胜'.format(opponent_player.name))
+            self.combatLose = True
+            target.combatWin = True
             opponent_player.combat_win_times += 1
             player.combat_lose_times += 1
         else:
             self.player.playinfo('双方平手,两败俱伤')
+            self.combatDraw = True
+            target.combatDraw = True
             player.combat_draw_times += 1
             opponent_player.combat_draw_times += 1
+
+        # 处理engage phase 2
+        for m in engage_list:
+            m.combat_over = True
+            m._do_engage()
 
         # 更换精灵/疲惫阶段
         if self.health > 0:
@@ -1018,8 +1039,14 @@ class Minion(Character):
             # self.buffs.append(Buff(EngageAttack(engage_attacker)))
         if engage_defender:
             self.engage.append(EngageDefender(Give(BuffOneTurn(ChangeAttack(engage_defender)))))
+            # self.engage.append(EngageDefender(Give(BuffUntil(ChangeAttack(engage_defender),TurnEnded(player=CurrentPlayer())))))
+            # self.buffs.append(Buff(ChangeAttack(engage_defender),IsDefender()))
+            # self.buffs.append(Buff(EngageDefender(engage_defender)))
         if engage_supporter:
             self.engage.append(EngageSupporter(Give(BuffOneTurn(ChangeAttack(engage_supporter)))))
+            # self.engage.append(EngageSupporter(Give(BuffUntil(ChangeAttack(engage_supporter),TurnEnded(player=CurrentPlayer())))))
+            # self.buffs.append(Buff(ChangeAttack(engage_supporter),IsSupporter()))
+            # self.buffs.append(Buff(EngageSupporter(engage_supporter)))
 
         # HB effects tag
         if deathrattle:
@@ -1329,7 +1356,7 @@ class Minion(Character):
         return True
 
     def __str__(self):  # pragma: no cover
-        return "{0} ({1})-{3}-index:{2}".format(self.card.name, self.calculate_attack(), self.index,
+        return "{0} ({1}) {3} index {2}".format(self.card.name, self.calculate_attack(), self.index,
                                                 'facedown' if self.facedown else '')
 
     def copy(self, new_owner, new_game=None):

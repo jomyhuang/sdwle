@@ -125,8 +125,9 @@ class BasicCardTest(unittest.TestCase):
         self.assertEqual(defender.combat_power, 200)
 
         print('draw card 3/hand %d' % (len(game.players[0].hand)))
-        self.assertEqual(len(game.players[0].hand), 8)
-        self.assertEqual(len(game.players[1].hand), 4)
+        self.assertEqual(len(game.players[0].hand), 11)
+
+        self.assertEqual(len(game.players[1].hand), 6)
 
         game.play_single_turn()
 
