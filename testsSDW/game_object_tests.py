@@ -79,7 +79,7 @@ class TestGame(unittest.TestCase):
         self.assertListEqual(checked_cards[0][1:], game.players[0].hand[1:], "Cards not retained after request")
         self.assertListEqual(checked_cards[1][1:2], game.players[1].hand[1:2], "Cards not retained after request")
 
-    def test_first_turn(self):
+    def test_game_start_end(self):
         card_set1 = []
         card_set2 = []
 
