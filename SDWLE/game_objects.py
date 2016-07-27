@@ -527,7 +527,6 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
             # SDW rule add attribute
             target = target_card.main_minion
 
-        # tagging combat tag
         player = self.player
         opponent_player = self.player.opponent
 
@@ -556,11 +555,11 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
         support_minion._remove_combat_tag()
         support_minion.supporter = True
 
-        other_player = self.player.game.other_player
-        target_support_card = other_player.choose_support_card(self.player.game.other_player)
+        # other_player = self.player.game.other_player
+        target_support_card = opponent_player.choose_support_card(opponent_player)
         # self.player.playinfo('enemy support {0}'.format(target_support_card.name))
 
-        other_player.game.play_support_card(target_support_card, target_card)
+        opponent_player.game.play_support_card(target_support_card, target_card)
         # self.player.playinfo('enemy support minions {0} {1}'.format(len(card_enemy.main_minion.support_minions),card_enemy.main_minion.support_minions[0].card.name))
         self.player.playinfo(
             'enemy support minions {0} {1}'.format(len(target.support_minions), target.support_minions[0].card.name))
@@ -611,7 +610,7 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
         target.combat_power = target_combat_power
         target.health = target.combat_power
 
-        print('my buffs {} / target buffs {}'.format(len(self.buffs), len(target.buffs)))
+        # print('my buffs {} / target buffs {}'.format(len(self.buffs), len(target.buffs)))
 
         self.player.playinfo('battle my attacker {0}+{1}={2} vs enemy {3}+{4}={5}'.format(
             my_attack_power, my_attack_support, my_combat_power,
