@@ -6,7 +6,7 @@ import SDWLE.targeting
 from SDWLE.constants import TROOP_TYPE
 from SDWLE.tags.action import Give
 from SDWLE.tags.base import Aura, AuraUntil, Effect, Buff, BuffUntil, Deathrattle, \
-    EngageAttack, EngageDefender, EngageSupporter, BuffOneTurn
+    EngageAttack, EngageDefender, EngageSupporter, BuffOneTurn, EngageDraw, EngageWin, EngageLose
 from SDWLE.tags.event import TurnEnded
 from SDWLE.tags.selector import CurrentPlayer
 from SDWLE.tags.status import Stealth, ChangeAttack, ChangeHealth, SetAttack, Charge, Taunt, DivineShield, \
@@ -368,7 +368,10 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
     """
 
     def __init__(self, attack_power, attack_power_sp=0, enrage=None, effects=None, auras=None, buffs=None,
-                 health=0):
+                 health=0,
+                 engage: object = None,
+                 engage_attacker: object = None, engage_defender: object = None, engage_supporter: object = None
+                 ):
         """
         Create a new Character with the given attack power and health
 
@@ -423,10 +426,48 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
         # : The maximum health of this character
         self.base_health = self.health
         # move from minion/hero subclass
-        self.exhausted = True
+        self.exhausted = False
         self.current_target = None
         # combat tag init
-        self._remove_combat_tag()
+        self._init_combat_tag()
+
+        # SDW effects tag
+        if engage:
+            if isinstance(engage, tuple):
+                # 处理engage是个元组
+                self.engage = []
+                for e in engage:
+                    self.engage.append(e)
+            elif isinstance(engage, list):
+                self.engage = engage
+            else:
+                self.engage = [engage, ]
+        else:
+            self.engage = []
+
+        if engage_attacker:
+            self.engage.append(EngageAttack(Give(BuffOneTurn(ChangeAttack(engage_attacker)))))
+            # self.engage.append(EngageAttack(Give(BuffUntil(ChangeAttack(engage_attacker),TurnEnded(player=CurrentPlayer())))))
+            # self.buffs.append(Buff(ChangeAttack(engage_attacker),IsAttacker()))
+            # self.buffs.append(Buff(EngageAttack(engage_attacker)))
+        if engage_defender:
+            self.engage.append(EngageDefender(Give(BuffOneTurn(ChangeAttack(engage_defender)))))
+            # self.engage.append(EngageDefender(Give(BuffUntil(ChangeAttack(engage_defender),TurnEnded(player=CurrentPlayer())))))
+            # self.buffs.append(Buff(ChangeAttack(engage_defender),IsDefender()))
+            # self.buffs.append(Buff(EngageDefender(engage_defender)))
+        if engage_supporter:
+            self.engage.append(EngageSupporter(Give(BuffOneTurn(ChangeAttack(engage_supporter)))))
+            # self.engage.append(EngageSupporter(Give(BuffUntil(ChangeAttack(engage_supporter),TurnEnded(player=CurrentPlayer())))))
+            # self.buffs.append(Buff(ChangeAttack(engage_supporter),IsSupporter()))
+            # self.buffs.append(Buff(EngageSupporter(engage_supporter)))
+
+    def _do_engage(self, filter):
+
+        for engage in self.engage:
+            if type(engage) in filter:
+                engage.do(self, self)
+                # if not engage.do(self, self):
+                #     break
 
     def _remove_stealth(self):
         if self.stealth:
@@ -435,7 +476,7 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
                     buff.unapply()
             self.buffs = [buff for buff in self.buffs if not isinstance(buff.status, Stealth)]
 
-    def _remove_combat_tag(self):
+    def _init_combat_tag(self):
         self.is_combat = False
         self.attacker = False
         self.defender = False
@@ -538,8 +579,8 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
         opponent_player.combat_minion = target
 
         # minion combat tag
-        self._remove_combat_tag()
-        target._remove_combat_tag()
+        self._init_combat_tag()
+        target._init_combat_tag()
 
         self.attacker = True
         target.defender = True
@@ -552,7 +593,7 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
             'attacker support minions {0} {1}'.format(len(self.support_minions), self.support_minions[0].card.name))
 
         support_minion = self.support_minions[0]
-        support_minion._remove_combat_tag()
+        support_minion._init_combat_tag()
         support_minion.supporter = True
 
         # other_player = self.player.game.other_player
@@ -565,7 +606,7 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
             'enemy support minions {0} {1}'.format(len(target.support_minions), target.support_minions[0].card.name))
 
         target_support_minion = target.support_minions[0]
-        target_support_minion._remove_combat_tag()
+        target_support_minion._init_combat_tag()
         target_support_minion.supporter = True
 
         # set player combat tag
@@ -585,18 +626,14 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
 
         # SDW rule 处理 engage effect
         # TODO 回合结束后如何处理engage
-        # TODO 解决如何重复增加Buff, 目前使用BuffUntil( ,turned )
+        # 解决如何重复增加Buff, 目前使用BuffUntil( ,turned )
         engage_list = [self, support_minion, target, target_support_minion]
 
         # 处理engage phase 1
         for m in engage_list:
             m.is_combat = True
-            m._do_engage()
-
-        # self._do_engage()
-        # support_minion._do_engage()
-        # target._do_engage()
-        # target_support_minion._do_engage()
+            m.exhausted = True
+            m._do_engage([EngageAttack, EngageDefender, EngageSupporter])
 
         my_attack_power = self.calculate_attack()
         my_attack_support = support_minion.calculate_attack()
@@ -644,16 +681,16 @@ class Character(Bindable, GameObject, metaclass=abc.ABCMeta):
         # 处理engage phase 2
         for m in engage_list:
             m.combat_over = True
-            m._do_engage()
+            m._do_engage([EngageWin, EngageLose, EngageDraw])
 
         # 更换精灵/疲惫阶段
         if self.health > 0:
             self.tired(support_minion)
-            # self.player.playinfo('{} 更换支援精灵上场 {}'.format(support_minion.card.name))
 
         if target.health > 0:
             target.tired(target_support_minion)
-            # self.player.playinfo('{} 对手更换支援精灵 {}'.format(target_support_minion.card.name))
+
+        # TODO 再战斗处理
 
         # 启动delay tigger/移除战斗死亡 !!学习机制
         self.player.game.check_delayed()
@@ -996,11 +1033,17 @@ class Minion(Character):
                  attack_name: object = '普通攻击', attack_sp_name: object = 'SP攻击',
                  engage: object = None,
                  engage_attacker: object = None, engage_defender: object = None, engage_supporter: object = None,
-                 deathrattle: object = None, taunt: object = False, charge: object = False, spell_damage: object = 0, divine_shield: object = False,
+                 deathrattle: object = None, taunt: object = False, charge: object = False, spell_damage: object = 0,
+                 divine_shield: object = False,
                  stealth: object = False,
-                 windfury: object = False, spell_targetable: object = True, effects: object = None, auras: object = None, buffs: object = None,
-                 enrage: object = None, facedown: object = False, troop: object = TROOP_TYPE.NONE, health: object = 0) -> object:
-        super().__init__(attack_power, attack_power_sp, enrage, effects, auras, buffs, health=health)
+                 windfury: object = False, spell_targetable: object = True, effects: object = None,
+                 auras: object = None, buffs: object = None,
+                 enrage: object = None, facedown: object = False, troop: object = TROOP_TYPE.NONE,
+                 health: object = 0) -> object:
+        super().__init__(attack_power, attack_power_sp, enrage, effects, auras, buffs, health=health,
+                         engage=engage,
+                         engage_attacker=engage_attacker, engage_defender=engage_defender,
+                         engage_supporter=engage_supporter)
         self.game = None
         self.card = None
         self.index = -1
@@ -1016,36 +1059,6 @@ class Minion(Character):
         self.attack_name = attack_name
         self.attack_sp_name = attack_sp_name
         self.troop = troop
-
-        # SDW effects tag
-        if engage:
-            if isinstance(engage, tuple):
-                # 处理engage是个元组
-                self.engage = []
-                for e in engage:
-                    self.engage.append(e)
-            elif isinstance(engage, list):
-                self.engage = engage
-            else:
-                self.engage = [engage, ]
-        else:
-            self.engage = []
-
-        if engage_attacker:
-            self.engage.append(EngageAttack(Give(BuffOneTurn(ChangeAttack(engage_attacker)))))
-            # self.engage.append(EngageAttack(Give(BuffUntil(ChangeAttack(engage_attacker),TurnEnded(player=CurrentPlayer())))))
-            # self.buffs.append(Buff(ChangeAttack(engage_attacker),IsAttacker()))
-            # self.buffs.append(Buff(EngageAttack(engage_attacker)))
-        if engage_defender:
-            self.engage.append(EngageDefender(Give(BuffOneTurn(ChangeAttack(engage_defender)))))
-            # self.engage.append(EngageDefender(Give(BuffUntil(ChangeAttack(engage_defender),TurnEnded(player=CurrentPlayer())))))
-            # self.buffs.append(Buff(ChangeAttack(engage_defender),IsDefender()))
-            # self.buffs.append(Buff(EngageDefender(engage_defender)))
-        if engage_supporter:
-            self.engage.append(EngageSupporter(Give(BuffOneTurn(ChangeAttack(engage_supporter)))))
-            # self.engage.append(EngageSupporter(Give(BuffUntil(ChangeAttack(engage_supporter),TurnEnded(player=CurrentPlayer())))))
-            # self.buffs.append(Buff(ChangeAttack(engage_supporter),IsSupporter()))
-            # self.buffs.append(Buff(EngageSupporter(engage_supporter)))
 
         # HB effects tag
         if deathrattle:
@@ -1133,13 +1146,6 @@ class Minion(Character):
                             aura.status.unact(aura.owner, minion)
         self.trigger("added_to_support_minion", self, main)
 
-    def _do_engage(self):
-
-        for engage in self.engage:
-            engage.do(self, self)
-            # if not engage.do(self, self):
-            #     break
-
     def calculate_attack(self):
         """
         Calculates the amount of attack this :class:`Minion` has, including the base attack, any temporary attack
@@ -1153,7 +1159,7 @@ class Minion(Character):
         if self.player.combat_minion is None:
             return power
 
-        # TODO 将ATH克制变成buff?
+        # 将ATH克制计算
         troop = self.troop
         active_sp = False
         opponent_troop = self.player.opponent.combat_minion.troop
@@ -1238,8 +1244,6 @@ class Minion(Character):
         self.replaced_by = new_minion
 
     def attack(self):
-        # if self.facedown:
-        #     raise GameException('attacker is facedown!')
         super().attack()
 
     def sdw_damage(self, amount, attacker):
@@ -1300,9 +1304,9 @@ class Minion(Character):
         if self.dead or self.removed:
             raise GameException('tired: minion tired error! is dead')
 
-        # TODO 处理exhausted
-        # if not self.exhausted:
-        #     raise GameException('tired: minion tired error! not exhausted')
+        # 处理exhausted
+        if not self.exhausted:
+            raise GameException('tired: minion tired error! not exhausted')
 
         if self.health <= 0:
             raise GameException('tired: minion tired error! health is 0')
