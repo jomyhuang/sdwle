@@ -128,6 +128,39 @@ def render_game(stdscr):
 
             return actions[selected]
 
+        def choose_support_card(self, player):
+            filtered_cards = [card for card in filter(lambda card: card.can_use(player, player.game), player.hand)]
+            if len(filtered_cards) is 0:
+                return None
+            renderer.targets = filtered_cards
+            renderer.selected_target = renderer.targets[0]
+            renderer.draw_game()
+            self.window.addstr(0, 0, "Choose Card")
+            self.window.refresh()
+            ch = 0
+            index = 0
+            while ch != 10 and ch != 27:
+                ch = self.game_window.getch()
+
+                if ch == curses.KEY_LEFT:
+                    index -= 1
+                    if index < 0:
+                        index = len(renderer.targets) - 1
+                if ch == curses.KEY_RIGHT:
+                    index += 1
+                    if index == len(renderer.targets):
+                        index = 0
+                renderer.selected_target = renderer.targets[index]
+                renderer.draw_game()
+                self.window.addstr(0, 0, "Choose Card")
+                self.window.refresh()
+
+            renderer.targets = None
+            if ch == 27:
+                return None
+
+            return renderer.selected_target
+
         def choose_card(self, player):
             filtered_cards = [card for card in filter(lambda card: card.can_use(player, player.game), player.hand)]
             if len(filtered_cards) is 0:

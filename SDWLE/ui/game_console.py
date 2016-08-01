@@ -1,4 +1,4 @@
-from hearthbreaker.constants import CHARACTER_CLASS
+from SDWLE.constants import CHARACTER_CLASS
 
 card_abbreviations = {
     'Mark of the Wild': 'Mrk Wild',
@@ -19,12 +19,14 @@ card_abbreviations = {
 def abbreviate(card_name):
     return card_abbreviations.get(card_name, card_name)
 
-
 def game_to_string(game):
     pass
 
-def console(y=0, x=0, info='', color=0):
-    print(info)
+
+class console:
+    @classmethod
+    def log(self, message, source=None, color=0):
+        print(message)
 
 
 class ConsoleGameRender:
@@ -59,7 +61,7 @@ class ConsoleGameRender:
 
     def console_printline(self):
         for line in self.lines:
-            console(0,0,line)
+            console.log(line)
 
     def draw_minion(self, minion, window, y, x, main=True):
         status_array = []
@@ -203,7 +205,7 @@ class ConsoleGameRender:
                                                                 len(self.top_player.hand),
                                                                    len(self.top_player.graveyard),
                                                                    len(self.top_player.graveyard_blackhole)))
-        console(0,0,top_player_info)
+        console.log(top_player_info)
 
         draw_minions(self.top_player.minions, self.top_minion_window, False)
         draw_minions(self.bottom_player.minions, self.bottom_minion_window, True)
@@ -216,7 +218,7 @@ class ConsoleGameRender:
                                                                         len(self.bottom_player.graveyard),
                                                                         len(self.bottom_player.graveyard_blackhole)))
 
-        console(0,0,player_info)
+        console.log(player_info)
 
         # draw_cards(self.bottom_player.hand[:5], self.bottom_player, self.card_window, 0)
         # draw_cards(self.bottom_player.hand[5:], self.bottom_player, self.card_window, 3)

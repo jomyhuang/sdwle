@@ -4,7 +4,7 @@ from SDWLE.agents import registry
 from SDWLE.cards.heroes import hero_for_class
 from SDWLE.constants import CHARACTER_CLASS
 from SDWLE.engine import Game, Deck, card_lookup
-from SDWLE.ui.game_console import ConsoleGameRender
+from SDWLE.ui.game_console import ConsoleGameRender, console
 from SDWLE.cards import *
 from SDWLE.game_objects import GameException
 from SDWLE.agents.basic_agents import DoNothingAgent, RandomAgent
@@ -45,7 +45,7 @@ def print_usage():
     print(usage)
 
 
-def console(y=0, x=0, info='dummy', color=0):
+def output(y=0, x=0, info='dummy', color=0):
     print(info)
 
 
@@ -54,7 +54,7 @@ def console_input_index(targets=[], prompt='>'):
     while selected < 0:
         s = input(prompt)
         if s is 'q':
-            console(0,0,'system exit')
+            output(0, 0, 'system exit')
             sys.exit(0)
         if str.isdigit(s) and int(s) >= 0 and int(s) <= len(targets)-1:
             selected = int(s)
@@ -71,6 +71,7 @@ def console_wait(prompt='[]'):
 
 
 def render_game():
+
     class ConsoleAgent:
 
         def __init__(self, game_window, prompt_window, text_window):
@@ -81,7 +82,7 @@ def render_game():
             #curses.init_pair(6, curses.COLOR_BLACK, curses.COLOR_GREEN)
 
         def playinfo(self,text):
-            console(0, 0, text)
+            output(0, 0, text)
 
         def do_turn(self, player):
             renderer.draw_game()
@@ -89,7 +90,7 @@ def render_game():
             action = self.choose_action()
             while not (action == "quit" or action == "end"):
                 if action == "play":
-                    console(0,0,'play do not support yet')
+                    output(0, 0, 'play do not support yet')
                     # card = self.choose_card(player)
                     # if card is not None:
                     #     player.game.play_card(card)
@@ -111,7 +112,7 @@ def render_game():
                     console_wait('[battle end]')
 
                 elif action == "power":
-                    console(0,0,'power do not support yet')
+                    output(0, 0, 'power do not support yet')
                     # if player.hero.power.can_use():
                     #     player.hero.power.use()
 
@@ -120,13 +121,13 @@ def render_game():
                 action = self.choose_action()
 
             if action == "quit":
-                console(0,0,'good-bye')
+                output(0, 0, 'good-bye')
                 sys.exit(0)
 
         def choose_action(self):
             #self.window.addstr(0, 0, "Choose action")
             actions = ["quit", "attack", "play", "power", "end"]
-            console(0, 0, "Choose action : 1)attack 2)play 3)power 4)turn end / 0)quit ")
+            output(0, 0, "Choose action : 1)attack 2)play 3)power 4)turn end / 0)quit ")
             selected = console_input_index(actions)
 
             # index = 0
@@ -175,7 +176,7 @@ def render_game():
                 return None
             renderer.targets = filtered_cards
 
-            console(0, 0, 'choose card [0-{0}]'.format(len(filtered_cards)-1))
+            output(0, 0, 'choose card [0-{0}]'.format(len(filtered_cards) - 1))
             # renderer.selected_target = console_input_index(renderer.targets[0])
             renderer.selected_target = console_input_index(renderer.targets)
 
@@ -210,11 +211,11 @@ def render_game():
         def choose_support_card(self, player):
             filtered_cards = [card for card in filter(lambda card: card.can_use(player, player.game), player.hand)]
             if len(filtered_cards) is 0:
-                console(0, 0, 'no support card')
+                output(0, 0, 'no support card')
                 return None
             renderer.targets = filtered_cards
 
-            console(0, 0, 'choose support card [0-{0}]'.format(len(filtered_cards)-1))
+            output(0, 0, 'choose support card [0-{0}]'.format(len(filtered_cards) - 1))
             selected = console_input_index(renderer.targets)
             renderer.selected_target = filtered_cards[selected]
 
@@ -230,7 +231,7 @@ def render_game():
                 raise GameException('choose_attacker: 没有精灵可以出战')
 
             renderer.targets = filtered_attackers
-            console(0, 0, 'choose attacker [0-{0}]'.format(len(filtered_attackers)-1))
+            output(0, 0, 'choose attacker [0-{0}]'.format(len(filtered_attackers) - 1))
             selected = console_input_index(renderer.targets)
             renderer.selected_target = filtered_attackers[selected]
 
@@ -244,7 +245,7 @@ def render_game():
            if len(targets) is 0:
                 return None
            renderer.targets = targets
-           console(0, 0, 'choose target [0-{0}]'.format(len(targets)-1))
+           output(0, 0, 'choose target [0-{0}]'.format(len(targets) - 1))
            selected = console_input_index(renderer.targets)
            renderer.selected_target = renderer.targets[selected]
 
@@ -349,8 +350,8 @@ def render_game():
     prompt_window = None
     text_window = None
 
-    console(0,0,'SEER DIMESIONS WAR 精灵战争 SDWLE project')
-    console(0,0,'================================================')
+    console.log('SEER DIMESIONS WAR 精灵战争 SDWLE project')
+    console.log('================================================')
 
     agent = choose_agent(stdscr)
 
