@@ -52,6 +52,7 @@ class ConsoleGameRender:
         self.card_window = None
         self.card_window = None
         self.window = window
+
         self.game = game
         self.targets = None
         self.selected_target = None
@@ -126,7 +127,7 @@ class ConsoleGameRender:
             if not self.targets:
                 color = 2
         else:
-            status = " "
+            status = ' '
             if not self.targets:
                 color = 1
         if self.targets:
@@ -203,8 +204,9 @@ class ConsoleGameRender:
 
         top_player_info = ''.join('deck:{0} hand:{1} base:{2} black-hole:{3}'.format(self.top_player.deck.left,
                                                                 len(self.top_player.hand),
-                                                                   len(self.top_player.graveyard),
-                                                                   len(self.top_player.graveyard_blackhole)))
+                                                                                     len(self.top_player.graveyard),
+                                                                                     len(
+                                                                                         self.top_player.graveyard_blackhole)))
         console.log(top_player_info)
 
         draw_minions(self.top_player.minions, self.top_minion_window, False)
